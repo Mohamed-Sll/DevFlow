@@ -29,11 +29,16 @@ The repository contains **two independent clients**:
 | **Web app** (`web/`) — main client | React 19, TypeScript, Vite, Tailwind CSS | Local-first, stored in the browser's IndexedDB through Dexie.js. No server, no account, works offline. |
 | **Desktop app** (repository root) | Python 3.12, PyQt6 | Supabase (PostgreSQL). Packaged for Windows with PyInstaller. |
 
-The two clients do not share data. The public web app has no login: each visitor's records stay in that browser profile, without upload, sharing, or sync across devices. Clearing browser storage can remove them, so export important records regularly. The web app replaced Supabase with IndexedDB in June 2026 (see [ADR-007](docs/decisions.md#adr-007-local-first-web-storage-with-dexie)); the desktop client still uses Supabase.
+The two clients do not share data. The public web app has no login: each visitor's records stay in that browser profile, without upload, sharing, or sync across devices. The web app replaced Supabase with IndexedDB in June 2026 (see [ADR-007](docs/decisions.md#adr-007-local-first-web-storage-with-dexie)); the desktop client still uses Supabase.
+
+> [!WARNING]
+> **Web data is stored only in your browser.** DevFlow's web app has no hosted database, account, cloud backup, or sync. If you clear this site's/browser's storage, use a private window, or switch browser profiles/devices, your history may disappear or be unavailable. Clearing IndexedDB deletes the local records permanently; DevFlow cannot restore them. Export your records regularly and keep the exported files somewhere safe.
+
+The public URL is open for anyone to use, but users do not see each other's records: data is isolated in each browser's local IndexedDB. This is an open-source portfolio/demo project, not a hosted multi-user service.
 
 ### Demo
 
-- **Live demo:** coming soon (the previous Vercel deployment is offline).
+- **Live demo:** coming soon.
 - **Video walkthrough:** coming soon.
 
 ---
