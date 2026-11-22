@@ -2,7 +2,9 @@
 
 ## Schema
 
-DevFlow uses a PostgreSQL database hosted on Supabase. Below are the core tables.
+This schema is used by the **desktop client** (PyQt6), which stores its data in PostgreSQL on Supabase. The web app does not use it: it keeps the same entities locally in IndexedDB (see [architecture.md](architecture.md) and ADR-007 in [decisions.md](decisions.md)).
+
+Below are the core tables.
 
 ### `clientes`
 Stores client/customer information.

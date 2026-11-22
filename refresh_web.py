@@ -10,8 +10,6 @@ apos resetar a base de dados.
 
 from __future__ import annotations
 
-import json
-
 
 def print_instructions() -> None:
     """Imprime instrucoes para recarregar a aplicacao web."""

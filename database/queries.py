@@ -9,8 +9,8 @@ from supabase import Client
 
 from .connection import get_client
 from .models import (
-    AppSnapshot,
     Aporte,
+    AppSnapshot,
     CategoriaGasto,
     ChatMensagem,
     Cliente,
@@ -603,15 +603,11 @@ class SupabaseRepository:
         for tabela in ordem:
             try:
                 # Tentar usar is_null para garantir que deleta tudo
-                response = self.client.table(tabela).delete().gt("id", 0).execute()
-                count = len(response.data) if response.data else 0
-                # print(f"  {tabela}: {count} registos deletados")
-            except Exception as e:
+                self.client.table(tabela).delete().gt("id", 0).execute()
+            except Exception:
                 # Se gt("id", 0) falhar, tentar com neq("id", 0)
                 try:
-                    response = self.client.table(tabela).delete().neq("id", 0).execute()
-                    count = len(response.data) if response.data else 0
-                    # print(f"  {tabela}: {count} registos deletados (via neq)")
+                    self.client.table(tabela).delete().neq("id", 0).execute()
                 except Exception as e2:
                     raise RuntimeError(f"Erro ao deletar {tabela}: {e2}")
         

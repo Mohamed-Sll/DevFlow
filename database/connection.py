@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Final
 
 from dotenv import load_dotenv
+
 from supabase import Client, create_client
 
 

@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 
 from database.models import Aporte, Gasto, Projeto
 from ui.theme import CORES
-from utils.formatacao import cor_prazo, formatar_moeda, percentual
+from utils.formatacao import formatar_moeda
 
 
 def format_money(value: float, moeda: str) -> str:

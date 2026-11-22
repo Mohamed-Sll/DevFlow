@@ -1,0 +1,8 @@
+target-version = "py312"
+extend-exclude = ["web"]
+
+[lint]
+# pyflakes + pycodestyle errors + import order + pyupgrade.
+# The desktop UI catches broad exceptions on purpose to show error dialogs,
+# so flake8-blind-except is not part of the enforced set.
+select = ["E4", "E7", "E9", "F", "I", "UP"]

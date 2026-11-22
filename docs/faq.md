@@ -26,7 +26,7 @@ Yes, completely. All data is stored in your browser's IndexedDB. The app require
 Yes. Deploy the frontend to any static host (Vercel, Netlify, Cloudflare Pages) — no server or database needed.
 
 ### What happens if I clear my browser data?
-Clearing browsing data (IndexedDB) will erase all app data. You can export your data via the export buttons on each page before clearing.
+DevFlow stores web-app records in this browser's IndexedDB only. Clearing this site's storage or browser data deletes the local records permanently; there is no hosted database, account, or backup from which DevFlow can restore them. Private/incognito windows use temporary or isolated storage, and another browser profile or device will not contain this history. Export your records before clearing storage and keep the exported files somewhere safe.
 
 ### Can I sync data between devices?
 Not yet. Sync support across devices is on the roadmap.
@@ -37,7 +37,7 @@ Not yet. Sync support across devices is on the roadmap.
 The available currencies are CVE, USD, and EUR. Multi-currency support with exchange rates is on the roadmap.
 
 ### Can I invite team members?
-Auth has been temporarily removed to simplify setup. A guest/demo mode and multi-user support may be added in the future.
+No. The public web app is open for anyone to use, but each browser has its own separate local data. There are no accounts, shared workspaces, or cross-device sync.
 
 ### How do I export my data?
 Use the export buttons on each page. Available formats: CSV, Excel (.xlsx), and PDF.

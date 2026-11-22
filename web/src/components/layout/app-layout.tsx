@@ -266,6 +266,9 @@ export function AppLayout() {
 
           <main className="flex-1 px-3 py-3 md:px-6 md:py-6 lg:px-8 lg:py-7">
             <div className="mx-auto w-full max-w-[1280px]">
+              <p className="mb-5 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] px-4 py-3 text-sm text-[var(--text-muted)]">
+                Os teus dados ficam apenas neste navegador. Se limpares os dados do site ou do navegador, o teu histórico será apagado sem recuperação. Exporta uma cópia para guardar os teus registos.
+              </p>
               <Outlet />
             </div>
           </main>
