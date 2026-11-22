@@ -466,7 +466,7 @@ export function FinancePage() {
   const [deletingIncomeId, setDeletingIncomeId] = useState<number | null>(null)
   const section = getWorkspaceSection(location.pathname, '/financas', 'overview')
   const sectionNavItems = [
-    { label: 'Overview', to: '/financas' },
+    { label: 'Resumo', to: '/financas' },
     { label: 'Lancamentos', to: '/financas/lancamentos' },
     { label: 'Anual', to: '/financas/anual' },
   ]

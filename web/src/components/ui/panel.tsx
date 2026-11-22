@@ -13,17 +13,17 @@ export function Panel({ actions, children, className, description, icon, title }
   return (
     <section
       className={[
-        'rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-6',
+        'rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 shadow-none sm:p-6',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
     >
       {(title || description || actions) && (
-        <header className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <header className="mb-5 flex flex-col gap-4 border-b border-[var(--border-subtle)] pb-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
             {icon ? (
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] text-sm">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-soft)] text-sm text-[var(--brand)]">
                 {icon}
               </span>
             ) : null}

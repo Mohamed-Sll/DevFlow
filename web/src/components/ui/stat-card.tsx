@@ -14,19 +14,21 @@ export function StatCard({
   return (
     <article
       className={[
-        'group relative overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 transition hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)]',
+        'group relative min-w-0 overflow-hidden rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 shadow-none transition duration-200 hover:border-[var(--border-strong)] sm:p-5',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-[3px]" style={{ backgroundColor: accent }} />
-      <div className="pl-4">
-        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--text-secondary)]">{label}</p>
-        <p className="mt-2 font-mono text-2xl font-semibold leading-none tracking-tight sm:text-[28px]" style={{ color: accent }}>
+      <div className="flex items-center gap-2">
+        <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: accent }} />
+        <p className="truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)] sm:text-[11px]">{label}</p>
+      </div>
+      <div className="mt-3">
+        <p className="whitespace-nowrap font-mono text-[clamp(1.05rem,1.55vw,1.45rem)] font-semibold leading-none tracking-tight text-[var(--text-primary)]">
           {value}
         </p>
-        {subtitle ? <p className="mt-2 text-xs text-[var(--text-muted)]">{subtitle}</p> : null}
+        {subtitle ? <p className="mt-2 min-h-8 text-xs leading-relaxed text-[var(--text-muted)]">{subtitle}</p> : null}
       </div>
     </article>
   )

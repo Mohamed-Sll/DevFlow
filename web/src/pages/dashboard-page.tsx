@@ -40,42 +40,42 @@ const STATUS_DEFINITIONS = [
     border: '#5a4722',
     color: 'var(--color-warning)',
     key: 'pendente',
-    label: 'Pending',
+    label: 'Pendente',
     surface: 'rgba(140,96,15,0.18)',
   },
   {
     border: '#234a73',
     color: 'var(--color-info)',
     key: 'em_andamento',
-    label: 'In progress',
+    label: 'Em andamento',
     surface: 'rgba(26,72,133,0.2)',
   },
   {
     border: '#6a4a2a',
     color: '#ff8c42',
     key: 'pago_parcial',
-    label: 'Partial paid',
+    label: 'Pago parcialmente',
     surface: 'rgba(140,80,20,0.18)',
   },
   {
     border: '#1f4a39',
     color: 'var(--color-success)',
     key: 'pago',
-    label: 'Success',
+    label: 'Pago',
     surface: 'rgba(20,86,58,0.18)',
   },
   {
     border: '#41506a',
     color: '#8ea0bc',
     key: 'concluido',
-    label: 'Closed',
+    label: 'Concluído',
     surface: 'rgba(92,109,140,0.18)',
   },
   {
     border: '#4a1f2a',
     color: 'var(--color-danger)',
     key: 'cancelado',
-    label: 'Failed',
+    label: 'Cancelado',
     surface: 'rgba(113,29,43,0.18)',
   },
 ]
@@ -103,7 +103,7 @@ export function DashboardPage() {
         title="Falha ao carregar"
       >
         <p className="text-sm text-[var(--text-secondary)]">
-          Verifique a ligacao ao Supabase e a politica de acesso das tabelas.
+          Verifica se o armazenamento local do navegador está disponível e tenta novamente.
         </p>
       </Panel>
     )
@@ -231,16 +231,16 @@ export function DashboardPage() {
   ]
   const section = getWorkspaceSection(location.pathname, '/dashboard', 'overview')
   const sectionNavItems = [
-    { label: 'Overview', to: '/dashboard' },
+    { label: 'Resumo', to: '/dashboard' },
     { label: 'Fluxo', to: '/dashboard/fluxo' },
     { label: 'Pipeline', to: '/dashboard/pipeline' },
-    { label: 'Operacoes', to: '/dashboard/operacoes' },
+    { label: 'Operações', to: '/dashboard/operacoes' },
   ]
 
   return (
     <div className="space-y-6">
       <PageSectionNav
-        helper="Cada vista concentra uma parte do dashboard para evitar uma tela longa demais e deixar a navegacao mais objetiva."
+        helper="Resumo, fluxo financeiro, pipeline e operações — cada vista reúne as métricas relevantes para a tarefa."
         items={sectionNavItems}
       />
 
@@ -270,9 +270,9 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {['overview', 'pipeline'].includes(section) ? (
+      {['overview', 'pipeline'].includes(section) && visibleStatusRows.length > 0 ? (
         <div className="flex flex-wrap gap-3">
-          {statusRows.map((row) => (
+          {visibleStatusRows.map((row) => (
             <div
               key={row.key}
               className="inline-flex items-center gap-3 rounded-full border px-4 py-2.5 text-sm shadow-[var(--shadow-soft)]"

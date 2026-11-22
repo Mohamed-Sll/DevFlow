@@ -22,13 +22,13 @@ export const CURRENCY_OPTIONS = [
 ]
 
 export const BUTTON_PRIMARY =
-  'inline-flex items-center justify-center rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-medium text-[var(--inverted-text)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex items-center justify-center rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-[var(--inverted-text)] transition hover:brightness-105 focus-visible:ring-4 focus-visible:ring-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-50'
 
 export const BUTTON_SECONDARY =
-  'inline-flex items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-transparent px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-50'
 
 export const INPUT_BASE =
-  'w-full rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] shadow-[var(--shadow-soft)] transition focus:border-[var(--border-strong)] focus:ring-4 focus:ring-[var(--brand-soft)]'
+  'w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] transition focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand-soft)]'
 
 export const TEXTAREA_BASE = `${INPUT_BASE} min-h-[110px] resize-y`
 
