@@ -28,6 +28,19 @@ export async function exportToPdfCompleto(
   doc.setFontSize(14)
   doc.text('Resumo Financeiro', margin, 37)
   let lastY = 0
+  const startSection = (title: string) => {
+    let y = lastY
+    if (y > 260) {
+      doc.addPage()
+      y = 20
+    }
+    doc.setFontSize(14)
+    doc.text(title, margin, y)
+    return y
+  }
+  const getLastTableY = () =>
+    (doc as typeof doc & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
+
   autoTable(doc, {
     startY: 40,
     head: [['Indicador', 'Valor']],
@@ -47,14 +60,10 @@ export async function exportToPdfCompleto(
     columnStyles: { 0: { cellWidth: 100 }, 1: { cellWidth: 60, halign: 'right' } },
     margin: { left: margin, right: margin },
   })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  lastY = (doc as any).lastAutoTable.finalY + 10
+  lastY = getLastTableY() + 10
 
   if (projetos.length > 0) {
-    const y = lastY
-    if (y > 250) doc.addPage()
-    doc.setFontSize(14)
-    doc.text('Projetos', margin, y)
+    const y = startSection('Projetos')
 
     const projBody = projetos.map((p) => [
       getClientName(p),
@@ -74,15 +83,11 @@ export async function exportToPdfCompleto(
       alternateRowStyles: { fillColor: [245, 245, 245] },
       margin: { left: margin, right: margin },
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    lastY = (doc as any).lastAutoTable.finalY + 10
+    lastY = getLastTableY() + 10
   }
 
   if (gastos.length > 0) {
-    const y = lastY
-    if (y > 250) doc.addPage()
-    doc.setFontSize(14)
-    doc.text('Gastos (últimos 50)', margin, y)
+    const y = startSection('Gastos (últimos 50)')
 
     const gastoBody = gastos.slice(0, 50).map((g) => [
       formatDate(g.data),
@@ -108,15 +113,11 @@ export async function exportToPdfCompleto(
         4: { cellWidth: 15, halign: 'center' },
       },
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    lastY = (doc as any).lastAutoTable.finalY + 10
+    lastY = getLastTableY() + 10
   }
 
   if (receitas.length > 0) {
-    const y = lastY
-    if (y > 250) doc.addPage()
-    doc.setFontSize(14)
-    doc.text('Receitas (últimas 50)', margin, y)
+    const y = startSection('Receitas (últimas 50)')
 
     const recBody = receitas.slice(0, 50).map((r) => [
       formatDate(r.data),
@@ -140,8 +141,7 @@ export async function exportToPdfCompleto(
         3: { cellWidth: 25, halign: 'right' },
       },
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    lastY = (doc as any).lastAutoTable.finalY + 10
+    lastY = getLastTableY() + 10
   }
 
   const name = filename ? `devflow-relatorio-${filename}` : `devflow-relatorio-${new Date().toISOString().slice(0, 10)}`
