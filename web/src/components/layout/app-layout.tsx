@@ -19,47 +19,47 @@ import { fetchConfiguracoes, saveConfiguracoes } from '../../lib/data'
 const NAV_ITEMS = [
   { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
   { icon: BriefcaseBusiness, label: 'Projetos', path: '/projetos' },
-  { icon: Wallet, label: 'Financas', path: '/financas' },
+  { icon: Wallet, label: 'Finanças', path: '/financas' },
   { icon: Landmark, label: 'Investimentos', path: '/investimentos' },
   { icon: Clock3, label: 'Timer', path: '/timer' },
-  { icon: Settings2, label: 'Config', path: '/config' },
+  { icon: Settings2, label: 'Definições', path: '/config' },
 ]
 
 const PAGE_TITLES = [
   {
-    eyebrow: 'Preferencias',
+    eyebrow: 'Área pessoal',
     path: '/config',
-    subtitle: 'Ajustes pessoais, moeda e parametros do teu cockpit financeiro.',
-    title: 'Configuracoes',
+    subtitle: 'Personaliza as tuas preferências e a forma como acompanhas o negócio.',
+    title: 'Definições',
   },
   {
-    eyebrow: 'Visao geral',
+    eyebrow: 'Bom ter-te por aqui',
     path: '/dashboard',
-    subtitle: 'Resumo executivo, atalhos e leitura rapida do negocio.',
+    subtitle: 'Uma vista clara da atividade e das prioridades do teu negócio.',
     title: 'Dashboard',
   },
   {
-    eyebrow: 'Fluxo financeiro',
+    eyebrow: 'Controlo financeiro',
     path: '/financas',
-    subtitle: 'Caixa, lancamentos, agenda e leitura anual em paginas separadas.',
+    subtitle: 'Acompanha receitas, despesas e o saldo ao longo do tempo.',
     title: 'Financas',
   },
   {
-    eyebrow: 'Patrimonio',
+    eyebrow: 'Património',
     path: '/investimentos',
-    subtitle: 'Carteira, movimentos e metas organizados por tarefa.',
+    subtitle: 'Organiza a carteira, os movimentos e as tuas metas.',
     title: 'Investimentos',
   },
   {
-    eyebrow: 'Pipeline',
+    eyebrow: 'Trabalho',
     path: '/projetos',
-    subtitle: 'Criacao, filtro e acompanhamento de projetos sem sobrecarregar a mesma tela.',
+    subtitle: 'Mantém cada projeto organizado, do primeiro contacto à entrega.',
     title: 'Projetos',
   },
   {
-    eyebrow: 'Foco',
+    eyebrow: 'Tempo e foco',
     path: '/timer',
-    subtitle: 'Timer, faturacao e historico divididos por necessidade operacional.',
+    subtitle: 'Regista sessões de trabalho e acompanha o tempo dedicado.',
     title: 'Timer de trabalho',
   },
 ]
@@ -148,7 +148,7 @@ export function AppLayout() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[var(--bg-canvas)] text-[var(--text-primary)]">
-      <div className="relative mx-auto flex min-h-screen max-w-[1680px] flex-col lg:flex-row lg:px-4">
+      <div className="relative flex min-h-screen w-full flex-col lg:flex-row">
         {/* Mobile top bar (logo + hamburger) */}
         <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-canvas)] px-4 py-3 lg:hidden">
           <div className="flex items-center gap-3">
@@ -183,7 +183,7 @@ export function AppLayout() {
         <aside
           id="app-sidebar"
           className={[
-            'fixed inset-y-0 left-0 z-50 flex w-[75vw] max-w-[280px] flex-col border-r border-[var(--border-subtle)] bg-[var(--bg-canvas)] px-4 py-6 shadow-2xl transition-[transform,visibility] duration-300 ease-out lg:visible lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[220px] lg:translate-x-0 lg:overflow-y-auto lg:border-r lg:border-[var(--border-subtle)] lg:px-4 lg:py-6 lg:shadow-none',
+            'fixed inset-y-0 left-0 z-50 flex w-[78vw] max-w-[300px] flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] px-5 py-6 shadow-2xl transition-[transform,visibility] duration-300 ease-out lg:visible lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[252px] lg:translate-x-0 lg:overflow-y-auto lg:border-r lg:px-5 lg:py-7 lg:shadow-none',
             mobileMenuOpen ? 'visible translate-x-0' : 'invisible -translate-x-full',
           ].join(' ')}
         >
@@ -193,13 +193,13 @@ export function AppLayout() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--brand)] text-sm font-bold text-[var(--inverted-text)]">
                 D
               </div>
-              <span className="font-['Space_Grotesk',sans-serif] text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+              <span className="font-['Space_Grotesk',sans-serif] text-lg font-semibold tracking-tight text-white">
                 DevFlow
               </span>
             </div>
             <button
               aria-label="Fechar menu de navegacao"
-              className="flex h-10 w-10 items-center justify-center rounded-md text-[var(--text-muted)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text-primary)] lg:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition hover:bg-white/10 hover:text-white lg:hidden"
               onClick={closeMobile}
               type="button"
             >
@@ -207,16 +207,18 @@ export function AppLayout() {
             </button>
           </div>
 
-          <div className="mt-6 flex items-center gap-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--brand-soft)] text-xs font-semibold text-[var(--brand)]">
+          <div className="mt-9 flex items-center gap-3 border-y border-white/10 py-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-[var(--text-primary)]">{displayName}</p>
+              <p className="truncate text-sm font-medium text-white">{displayName}</p>
+              <p className="mt-0.5 text-[11px] text-white/45">Espaço pessoal</p>
             </div>
           </div>
 
-          <nav aria-label="Navegacao principal" className="mt-6 flex-1 space-y-1">
+          <p className="mb-3 mt-8 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Menu principal</p>
+          <nav aria-label="Navegação principal" className="flex-1 space-y-1">
             {NAV_ITEMS.map(({ icon: Icon, label, path }) => (
               <NavLink
                 key={path}
@@ -224,36 +226,39 @@ export function AppLayout() {
                 onClick={closeMobile}
                 className={({ isActive }) =>
                   [
-                    'group flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition',
+                    'group flex items-center gap-3 rounded-xl px-3 py-3 text-[13px] font-medium transition duration-200',
                     isActive
-                      ? 'border-l-[3px] border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]'
-                      : 'border-l-[3px] border-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-2)] hover:text-[var(--text-primary)]',
+                      ? 'bg-[var(--sidebar-active)] text-white shadow-sm'
+                      : 'text-white/60 hover:bg-white/[0.07] hover:text-white',
                   ].join(' ')
                 }
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-[17px] w-[17px] opacity-75 group-hover:opacity-100" />
                 {label}
               </NavLink>
             ))}
           </nav>
-
-
+          <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.04] p-3.5">
+            <p className="text-xs font-medium text-white/85">Os teus dados são locais</p>
+            <p className="mt-1.5 text-[11px] leading-relaxed text-white/45">Este espaço guarda tudo neste navegador. Exporta cópias para manter o teu histórico.</p>
+          </div>
         </aside>
 
         <div className="flex min-h-screen flex-1 flex-col">
-          <header className="sticky top-16 z-20 border-b border-[var(--border-subtle)] bg-[var(--surface-1)]/90 px-4 py-2 backdrop-blur-md md:px-6 md:py-3 lg:top-0 lg:px-8">
-            <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between">
+          <header className="sticky top-16 z-20 border-b border-[var(--border-subtle)] bg-[var(--bg-canvas)]/90 px-4 py-4 backdrop-blur-xl md:px-8 md:py-5 lg:top-0 lg:px-10">
+            <div className="flex w-full items-center justify-between gap-6">
               <div className="min-w-0">
-                <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[var(--text-muted)] md:text-[11px]">{heading.eyebrow}</p>
-                <h2 className="mt-0.5 text-lg font-bold leading-tight tracking-tight text-[var(--text-primary)] sm:text-xl md:text-2xl lg:text-[32px]" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--brand)] md:text-[11px]">{heading.eyebrow}</p>
+                <h2 className="mt-1 text-xl font-semibold leading-tight tracking-[-0.04em] text-[var(--text-primary)] sm:text-2xl md:text-[28px]" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}>
                   {heading.title}
                 </h2>
+                <p className="mt-1 hidden text-xs text-[var(--text-muted)] md:block">{heading.subtitle}</p>
               </div>
 
               <div className="flex items-center gap-1.5 md:gap-2">
                 <button
                   aria-label={isDark ? 'Ativar tema claro' : 'Ativar tema escuro'}
-                  className="flex h-9 w-9 items-center justify-center rounded-md text-[var(--text-muted)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text-primary)]"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:text-[var(--brand)]"
                   onClick={() => void handleThemeChange(theme === 'dark' ? 'light' : 'dark')}
                   type="button"
                 >
@@ -264,10 +269,11 @@ export function AppLayout() {
             </div>
           </header>
 
-          <main className="flex-1 px-3 py-3 md:px-6 md:py-6 lg:px-8 lg:py-7">
-            <div className="mx-auto w-full max-w-[1280px]">
-              <p className="mb-5 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] px-4 py-3 text-sm text-[var(--text-muted)]">
-                Os teus dados ficam apenas neste navegador. Se limpares os dados do site ou do navegador, o teu histórico será apagado sem recuperação. Exporta uma cópia para guardar os teus registos.
+          <main className="flex-1 px-4 py-5 md:px-8 md:py-7 lg:px-10 lg:py-8">
+            <div className="w-full">
+              <p className="mb-6 flex items-start gap-2.5 rounded-xl border border-[var(--alert-warning-border)] bg-[var(--alert-warning-bg)] px-4 py-3 text-xs leading-relaxed text-[var(--text-secondary)] sm:items-center">
+                <span className="mt-0.5 shrink-0 font-semibold text-[var(--color-warning)] sm:mt-0">Atenção</span>
+                <span>Os dados ficam neste navegador. Se apagares os dados do site, o histórico desaparece sem recuperação. Exporta uma cópia regularmente.</span>
               </p>
               <Outlet />
             </div>

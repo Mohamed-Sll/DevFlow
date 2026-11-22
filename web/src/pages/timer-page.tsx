@@ -68,7 +68,7 @@ export function TimerPage() {
   const [now, setNow] = useState(() => new Date())
   const section = getWorkspaceSection(location.pathname, '/timer', 'overview')
   const sectionNavItems = [
-    { label: 'Overview', to: '/timer' },
+    { label: 'Resumo', to: '/timer' },
     { label: 'Faturacao', to: '/timer/faturacao' },
     { label: 'Historico', to: '/timer/historico' },
   ]

@@ -69,7 +69,7 @@ export function ProjectsPage() {
   const deferredSearch = useDeferredValue(search)
   const section = getWorkspaceSection(location.pathname, '/projetos', 'overview')
   const sectionNavItems = [
-    { label: 'Overview', to: '/projetos' },
+    { label: 'Resumo', to: '/projetos' },
     { label: 'Pipeline', to: '/projetos/pipeline' },
     { label: 'Novo projeto', to: '/projetos/novo' },
   ]
@@ -574,7 +574,7 @@ export function ProjectsPage() {
                 Criar primeiro projeto
               </button>
             }
-            description="A base ainda esta vazia, mas agora ja podes abrir o primeiro projeto diretamente por aqui sem tocar no Supabase."
+            description="A base ainda esta vazia, mas agora ja podes abrir o primeiro projeto diretamente por aqui sem depender de serviços externos."
             icon={BriefcaseBusiness}
             tags={['Criacao direta', 'Cliente automatico', 'Sem dados falsos']}
             title="Nenhum projeto registado"

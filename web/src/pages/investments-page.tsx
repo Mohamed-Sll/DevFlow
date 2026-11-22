@@ -53,7 +53,7 @@ export function InvestmentsPage() {
   const [deletingMovementId, setDeletingMovementId] = useState<number | null>(null)
   const section = getWorkspaceSection(location.pathname, '/investimentos', 'overview')
   const sectionNavItems = [
-    { label: 'Overview', to: '/investimentos' },
+    { label: 'Resumo', to: '/investimentos' },
     { label: 'Carteira', to: '/investimentos/carteira' },
     { label: 'Novo', to: '/investimentos/novo' },
   ]

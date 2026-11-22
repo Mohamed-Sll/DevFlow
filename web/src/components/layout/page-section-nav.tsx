@@ -13,9 +13,9 @@ export function PageSectionNav({
   items: PageSectionItem[]
 }) {
   return (
-    <div className="space-y-3">
-      <div className="overflow-x-auto rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-2">
-        <div className="flex flex-nowrap gap-2">
+    <div className="space-y-2">
+      <div className="overflow-x-auto border-b border-[var(--border-subtle)]">
+        <div className="flex flex-nowrap gap-5">
           {items.map((item) => (
             <NavLink
               key={item.to}
@@ -23,10 +23,10 @@ export function PageSectionNav({
               end
               className={({ isActive }) =>
                 [
-                  'shrink-0 rounded-xl px-4 py-3 text-sm font-medium transition',
+                  'shrink-0 border-b-2 px-1 py-3 text-sm font-medium transition duration-200',
                   isActive
-                    ? 'bg-[var(--inverted-surface)] text-[var(--inverted-text)] shadow-[var(--shadow-soft)]'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-2)] hover:text-[var(--text-primary)]',
+                    ? 'border-[var(--brand)] text-[var(--text-primary)]'
+                    : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]',
                 ].join(' ')
               }
             >
@@ -36,7 +36,7 @@ export function PageSectionNav({
         </div>
       </div>
 
-      {helper ? <p className="px-1 text-sm text-[var(--text-secondary)]">{helper}</p> : null}
+      {helper ? <p className="px-1 text-xs leading-relaxed text-[var(--text-muted)]">{helper}</p> : null}
     </div>
   )
 }

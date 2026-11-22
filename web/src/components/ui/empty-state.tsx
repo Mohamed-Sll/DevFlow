@@ -48,15 +48,15 @@ export function EmptyState({
   variant,
 }: EmptyStateProps) {
   return (
-    <div className="rounded-2xl border border-dashed border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(10,10,10,0.98),rgba(4,4,4,0.98))] px-6 py-10 text-center">
+    <div className="rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--surface-1)] px-6 py-10 text-center">
       {variant ? (
         <EmptyIllustration variant={variant} />
       ) : (
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl border border-[var(--border-strong)] bg-[rgba(255,255,255,0.06)] text-[var(--brand)]">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand)]">
           <Icon className="h-7 w-7" />
         </div>
       )}
-      <h3 className="mt-5 text-2xl font-semibold tracking-[-0.04em] text-[var(--text-primary)]">{title}</h3>
+      <h3 className="mt-5 text-xl font-semibold tracking-[-0.04em] text-[var(--text-primary)]">{title}</h3>
       <p className="mx-auto mt-3 max-w-[640px] text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
 
       {tags.length > 0 ? (
