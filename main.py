@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import sys
 
-from PyQt6.QtWidgets import QApplication, QMessageBox
 from postgrest.exceptions import APIError
+from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from database.queries import SupabaseRepository
 from ui.dialogs import WelcomeDialog

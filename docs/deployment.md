@@ -29,15 +29,12 @@ The project includes a `vercel.json` with:
 
 ### GitHub Actions
 
-The project includes a CI pipeline that runs on every push/PR:
+The CI pipeline (`.github/workflows/ci.yml`) runs on every push and pull request to `main`:
 
-```yaml
-- npm ci          # Clean install
-- npm run lint    # ESLint check
-- npm run typecheck  # TypeScript check
-- npm run test    # Unit tests
-- npm run build   # Production build
-```
+| Job | Steps |
+|---|---|
+| `web` | `npm ci` → `npm run typecheck` → `npm run lint` → `npm run test` → `npm run build` |
+| `python` | `ruff check .` → `python -m compileall` on the desktop modules → `pytest` |
 
 ## Manual Build
 

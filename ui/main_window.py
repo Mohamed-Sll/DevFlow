@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date, datetime
 from pathlib import Path
-from typing import Callable
 
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer
 from PyQt6.QtGui import QCloseEvent, QMouseEvent
@@ -32,7 +32,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from database.models import AppSnapshot, Aporte, Gasto, Investimento, Projeto, Receita, TempoProjeto
+from database.models import (
+    Aporte,
+    AppSnapshot,
+    Gasto,
+    Investimento,
+    Projeto,
+    Receita,
+    TempoProjeto,
+)
 from database.queries import SupabaseRepository
 from ui.forms import (
     AlertsDialog,

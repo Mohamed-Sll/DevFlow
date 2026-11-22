@@ -50,10 +50,12 @@ jobs:
           python-version: '3.12'
           cache: pip
 
-      - run: pip install -r requirements.txt
+      - run: pip install -r requirements.txt pytest ruff==0.17.6
 
-      - run: pip install pytest ruff
+      - run: ruff check .
 
-      - run: ruff check . || true
+      # The PyQt6 window needs a display, so CI compiles every module and
+      # tests the non-GUI layers instead of importing main.py.
+      - run: python -m compileall -q main.py database ui utils
 
-      - run: python -c "import main; print('Python imports OK')"
+      - run: pytest -q

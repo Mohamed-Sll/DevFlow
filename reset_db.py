@@ -11,7 +11,6 @@ from __future__ import annotations
 import sys
 from os import getenv
 
-
 RESET_ENV_VAR = "DEVFLOW_ALLOW_DB_RESET"
 
 

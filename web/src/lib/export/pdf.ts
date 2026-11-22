@@ -48,7 +48,7 @@ export async function exportToPdfCompleto(
     margin: { left: margin, right: margin },
   })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  lastY = (autoTable as any).lastAutoTable.finalY + 10
+  lastY = (doc as any).lastAutoTable.finalY + 10
 
   if (projetos.length > 0) {
     const y = lastY
@@ -75,7 +75,7 @@ export async function exportToPdfCompleto(
       margin: { left: margin, right: margin },
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    lastY = (autoTable as any).lastAutoTable.finalY + 10
+    lastY = (doc as any).lastAutoTable.finalY + 10
   }
 
   if (gastos.length > 0) {
@@ -109,7 +109,7 @@ export async function exportToPdfCompleto(
       },
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    lastY = (autoTable as any).lastAutoTable.finalY + 10
+    lastY = (doc as any).lastAutoTable.finalY + 10
   }
 
   if (receitas.length > 0) {
@@ -141,7 +141,7 @@ export async function exportToPdfCompleto(
       },
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    lastY = (autoTable as any).lastAutoTable.finalY + 10
+    lastY = (doc as any).lastAutoTable.finalY + 10
   }
 
   const name = filename ? `devflow-relatorio-${filename}` : `devflow-relatorio-${new Date().toISOString().slice(0, 10)}`

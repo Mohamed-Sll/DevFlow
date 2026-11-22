@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import date, datetime
-from io import BytesIO
 from pathlib import Path
 from typing import Any
 
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, Border, Font, PatternFill, Side, numbers
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from database.models import Aporte, Gasto, Investimento, Projeto, Receita, TempoProjeto
@@ -16,7 +15,7 @@ from database.models import Aporte, Gasto, Investimento, Projeto, Receita, Tempo
 
 HEADER_FILL = PatternFill(start_color="FF1A1A1A", end_color="FF1A1A1A", fill_type="solid")
 HEADER_FONT = Font(bold=True, color="FFFFFFFF", size=11, name="Calibri")
-HEADER_ALIGNMENT = Alignment(vertical="middle", horizontal="left")
+HEADER_ALIGNMENT = Alignment(vertical="center", horizontal="left")
 BORDER_THIN = Border(bottom=Side(style="thin", color="FF444444"))
 BORDER_LIGHT = Border(bottom=Side(style="thin", color="FFE0E0E0"))
 ZEBRA_FILL = PatternFill(start_color="FFF5F5F5", end_color="FFF5F5F5", fill_type="solid")
@@ -49,7 +48,7 @@ def _estilizar_linhas(ws: Workbook, inicio: int, fim: int, num_colunas: int) -> 
         for col in range(1, num_colunas + 1):
             cell = ws.cell(row=row_idx, column=col)
             cell.font = Font(size=10, name="Calibri", color="FF333333")
-            cell.alignment = Alignment(vertical="middle")
+            cell.alignment = Alignment(vertical="center")
             cell.border = BORDER_LIGHT
             if (row_idx - inicio) % 2 == 1:
                 cell.fill = ZEBRA_FILL
@@ -493,9 +492,15 @@ def exportar_relatorio_pdf(
     destino: Path,
 ) -> Path:
     from reportlab.lib.pagesizes import A4
-    from reportlab.lib.units import mm
-    from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer
     from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import (
+        PageBreak,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+    )
 
     _criar_pasta(destino)
     doc = SimpleDocTemplate(
