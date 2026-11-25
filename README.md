@@ -135,6 +135,8 @@ python main.py
 
 ## Testing
 
+Install the desktop test and lint tools with `pip install -r requirements-dev.txt`.
+
 | Suite | Command | Scope |
 |---|---|---|
 | Web | `cd web && npm run test` | Formatting, export and utility functions (Vitest) |

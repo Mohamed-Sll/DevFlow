@@ -1,0 +1,4 @@
+-r requirements.txt
+pypdf>=5.4,<7
+pytest
+ruff==0.17.6

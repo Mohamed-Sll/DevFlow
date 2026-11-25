@@ -32,7 +32,8 @@ export async function exportToPdfCompleto(
   let lastY = 0
   const startSection = (title: string) => {
     let y = lastY
-    if (y > 260) {
+    // Keep the section title, table header and first row together on the page.
+    if (y > 235) {
       doc.addPage()
       y = 20
     }
