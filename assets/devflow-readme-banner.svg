@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="440" viewBox="0 0 1600 440" fill="none">
+  <defs>
+    <linearGradient id="panel" x1="88" y1="22" x2="1473" y2="414" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#111315"/>
+      <stop offset="1" stop-color="#080909"/>
+    </linearGradient>
+    <linearGradient id="mint" x1="1030" y1="116" x2="1430" y2="347" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00E5C0" stop-opacity=".92"/>
+      <stop offset="1" stop-color="#00A88F" stop-opacity=".16"/>
+    </linearGradient>
+    <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse">
+      <path d="M34 0H0V34" stroke="#fff" stroke-opacity=".035"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="440" rx="28" fill="url(#panel)"/>
+  <rect width="1600" height="440" rx="28" fill="url(#grid)"/>
+  <path d="M0 390C236 355 356 423 602 390C817 361 990 306 1218 335C1368 354 1484 394 1600 366V440H0V390Z" fill="#00E5C0" fill-opacity=".035"/>
+  <rect x="88" y="76" width="42" height="42" rx="13" fill="#00E5C0"/>
+  <path d="M100 104V90H106V98L112 86H118V104H112V96L106 104H100Z" fill="#050505"/>
+  <text x="148" y="105" fill="#F5F7F7" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="700" letter-spacing="-.5">DEVFLOW</text>
+  <text x="88" y="204" fill="#F5F7F7" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="62" font-weight="700" letter-spacing="-2.6">Your freelance work,</text>
+  <text x="88" y="276" fill="#F5F7F7" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="62" font-weight="700" letter-spacing="-2.6">in clear flow.</text>
+  <text x="92" y="325" fill="#A4ACAD" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="21">Projects · finances · time · investments</text>
+  <rect x="88" y="359" width="104" height="3" rx="1.5" fill="#00E5C0"/>
+  <text x="88" y="400" fill="#778080" font-family="Consolas, monospace" font-size="13" letter-spacing="2">LOCAL-FIRST  /  OPEN SOURCE  /  BUILT FOR FREELANCERS</text>
+  <g transform="translate(965 58)">
+    <rect x="0.5" y="0.5" width="527" height="322" rx="20" fill="#0C0E0F" stroke="#282D2E"/>
+    <circle cx="26" cy="27" r="4" fill="#FF4D67"/>
+    <circle cx="42" cy="27" r="4" fill="#D6A85F"/>
+    <circle cx="58" cy="27" r="4" fill="#00E5C0"/>
+    <path d="M28 84H196M28 101H112" stroke="#3A4142" stroke-width="7" stroke-linecap="round"/>
+    <rect x="28" y="133" width="135" height="89" rx="10" fill="#121617" stroke="#252B2C"/>
+    <path d="M44 198L69 177L91 188L124 155L147 164" stroke="#00E5C0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="124" cy="155" r="5" fill="#00E5C0"/>
+    <rect x="181" y="133" width="135" height="89" rx="10" fill="#121617" stroke="#252B2C"/>
+    <path d="M201 200V182M224 200V166M247 200V176M270 200V151M293 200V160" stroke="#00E5C0" stroke-opacity=".82" stroke-width="9" stroke-linecap="round"/>
+    <rect x="334" y="133" width="164" height="89" rx="10" fill="#121617" stroke="#252B2C"/>
+    <circle cx="378" cy="177" r="24" stroke="#273031" stroke-width="8"/>
+    <path d="M378 153A24 24 0 1 1 357 188" stroke="#00E5C0" stroke-width="8" stroke-linecap="round"/>
+    <path d="M415 168H477M415 184H462" stroke="#647071" stroke-width="5" stroke-linecap="round"/>
+    <path d="M28 262H498" stroke="#252B2C"/>
+    <path d="M29 298H75M92 298H138M155 298H201M218 298H264" stroke="url(#mint)" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>
