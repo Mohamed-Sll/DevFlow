@@ -609,5 +609,31 @@ def exportar_relatorio_pdf(
             col_widths=[50, 110, 60, 50],
         )
 
+    # Regista as sessões no relatório para a faturação não ficar só no Excel.
+    if sessoes:
+        elementos.append(Spacer(1, 6 * mm))
+        elementos.append(Paragraph("Sessões de trabalho", estilos["Heading2"]))
+        linhas_sess: list[list[str]] = []
+        for sessao in sessoes:
+            duracao = sessao.duracao_min
+            if duracao is None and sessao.fim is not None:
+                duracao = max(
+                    int((sessao.fim - sessao.inicio).total_seconds() // 60),
+                    0,
+                )
+            linhas_sess.append([
+                sessao.projeto.titulo if sessao.projeto else "-",
+                _data_str(sessao.inicio),
+                _data_str(sessao.fim),
+                str(duracao or 0),
+                (sessao.descricao or "-")[:80],
+            ])
+        _add_pdf_table(
+            elementos,
+            ["Projeto", "Início", "Fim", "Duração (min)", "Descrição"],
+            linhas_sess,
+            col_widths=[90, 60, 60, 65, 120],
+        )
+
     doc.build(elementos)
     return destino
