@@ -7,12 +7,15 @@ declare module 'lucide-react' {
   export const BarChart3: LucideIcon
   export const BriefcaseBusiness: LucideIcon
   export const CheckCircle2: LucideIcon
+  export const CircleDashed: LucideIcon
   export const ChevronDown: LucideIcon
   export const ChevronLeft: LucideIcon
   export const ChevronRight: LucideIcon
   export const CircleDashed: LucideIcon
   export const Clock3: LucideIcon
   export const Download: LucideIcon
+  export const Database: LucideIcon
+  export const FileUp: LucideIcon
   export const FileSpreadsheet: LucideIcon
   export const FileText: LucideIcon
   export const Filter: LucideIcon
@@ -21,10 +24,12 @@ declare module 'lucide-react' {
   export const Menu: LucideIcon
   export const Moon: LucideIcon
   export const PieChart: LucideIcon
+  export const Pencil: LucideIcon
   export const PlayCircle: LucideIcon
   export const PlusCircle: LucideIcon
   export const RefreshCcw: LucideIcon
   export const Save: LucideIcon
+  export const ShieldCheck: LucideIcon
   export const Search: LucideIcon
   export const Settings2: LucideIcon
   export const Square: LucideIcon

@@ -1,10 +1,8 @@
 import { Download, FileSpreadsheet, FileText, LoaderCircle, PieChart } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { EXPORT_PRESETS, exportToCsv, type ExportType } from '../../lib/export/export'
-import { exportToXlsx, exportToXlsxCompleto } from '../../lib/export/excel'
-import { exportToPdfCompleto } from '../../lib/export/pdf'
 import { cx } from '../../lib/cn'
-import type { Gasto, Projeto, Receita, TempoProjeto } from '../../lib/types'
+import type { Aporte, Gasto, Investimento, Projeto, Receita, TempoProjeto } from '../../lib/types'
 
 interface ExportDropdownProps<Row> {
   data: Row[]
@@ -18,13 +16,15 @@ interface ExportCompletoProps {
   gastos: Gasto[]
   receitas: Receita[]
   sessoes: TempoProjeto[]
+  investimentos: Investimento[]
+  aportes: Aporte[]
   label?: string
 }
 
 export function ExportDropdown<Row>({ data, type, filename, label = 'Exportar' }: ExportDropdownProps<Row>) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState<'csv' | 'xlsx' | null>(null)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [exportError, setExportError] = useState<string | null>(null)
   const loadingRef = useRef<'csv' | 'xlsx' | null>(null)
 
   async function handleExport(format: 'csv' | 'xlsx') {
@@ -32,17 +32,22 @@ export function ExportDropdown<Row>({ data, type, filename, label = 'Exportar' }
     loadingRef.current = format
     setIsLoading(format)
     setIsOpen(false)
+    setExportError(null)
 
     try {
       const preset = EXPORT_PRESETS[type]
       if (format === 'csv') {
         await exportToCsv(preset as never, data as never, filename)
       } else {
+        const { exportToXlsx } = await import('../../lib/export/excel')
         await exportToXlsx(preset as never, data as never, filename)
       }
+    } catch (error) {
+      console.error('Falha ao exportar dados:', error)
+      setExportError('Não foi possível gerar o ficheiro. Tenta novamente.')
     } finally {
       loadingRef.current = null
-      timeoutRef.current = setTimeout(() => setIsLoading(null), 600)
+      setIsLoading(null)
     }
   }
 
@@ -56,6 +61,8 @@ export function ExportDropdown<Row>({ data, type, filename, label = 'Exportar' }
             : 'border-[var(--border-subtle)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--surface-2)]',
         )}
         disabled={!!isLoading}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
         onClick={() => setIsOpen(!isOpen)}
         type="button"
       >
@@ -70,22 +77,24 @@ export function ExportDropdown<Row>({ data, type, filename, label = 'Exportar' }
       {isOpen ? (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 z-20 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] shadow-lg">
+          <div className="absolute right-0 z-20 mt-1 min-w-[200px] overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] shadow-lg" role="menu">
             <button
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-[var(--text-primary)] transition hover:bg-[var(--surface-2)]"
               onClick={() => handleExport('csv')}
+              role="menuitem"
               type="button"
             >
               <FileSpreadsheet className="h-4 w-4 text-[var(--color-info)]" />
               <div>
-                <p className="font-medium">CSV</p>
-                <p className="text-[11px] text-[var(--text-muted)]">Abrir em Excel ou Sheets</p>
+                <p className="font-medium">CSV para Excel</p>
+                <p className="text-[11px] text-[var(--text-muted)]">Colunas e decimais no formato local</p>
               </div>
             </button>
             <div className="border-t border-[var(--border-subtle)]" />
             <button
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-[var(--text-primary)] transition hover:bg-[var(--surface-2)]"
               onClick={() => handleExport('xlsx')}
+              role="menuitem"
               type="button"
             >
               <FileSpreadsheet className="h-4 w-4 text-[var(--color-success)]" />
@@ -97,18 +106,21 @@ export function ExportDropdown<Row>({ data, type, filename, label = 'Exportar' }
           </div>
         </>
       ) : null}
+      {exportError ? <p className="absolute right-0 top-full z-20 mt-1 w-56 text-xs text-[var(--color-danger)]" role="alert">{exportError}</p> : null}
     </div>
   )
 }
 
-export function ExportCompleto({ projetos, gastos, receitas, sessoes, label = 'Exportar' }: ExportCompletoProps) {
+export function ExportCompleto({ projetos, gastos, receitas, sessoes, investimentos, aportes, label = 'Exportar' }: ExportCompletoProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState<'xlsx' | 'pdf' | null>(null)
+  const [exportError, setExportError] = useState<string | null>(null)
   const loadingRef = useRef<'xlsx' | 'pdf' | null>(null)
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
     start: '',
     end: '',
   })
+  const invalidDateRange = Boolean(dateRange.start && dateRange.end && dateRange.start > dateRange.end)
 
   function filterByDateRange<T>(items: T[], getDate: (item: T) => string): T[] {
     if (!dateRange.start && !dateRange.end) return items
@@ -125,10 +137,11 @@ export function ExportCompleto({ projetos, gastos, receitas, sessoes, label = 'E
     loadingRef.current = format
     setIsLoading(format)
     setIsOpen(false)
+    setExportError(null)
 
     try {
-      if (dateRange.start && dateRange.end && dateRange.start > dateRange.end) {
-        window.alert('A data inicial nao pode ser maior que a data final.')
+      if (invalidDateRange) {
+        setExportError('A data inicial tem de ser anterior ou igual à data final.')
         return
       }
 
@@ -142,36 +155,45 @@ export function ExportCompleto({ projetos, gastos, receitas, sessoes, label = 'E
         : new Date().toISOString().slice(0, 10)
 
       if (format === 'xlsx') {
-        await exportToXlsxCompleto(filteredProjetos, filteredGastos, filteredReceitas, filteredSessoes, stamp)
+        const { exportToXlsxCompleto } = await import('../../lib/export/excel')
+        await exportToXlsxCompleto(filteredProjetos, filteredGastos, filteredReceitas, filteredSessoes, investimentos, aportes, stamp)
       } else {
-        await exportToPdfCompleto(filteredProjetos, filteredGastos, filteredReceitas, filteredSessoes, stamp)
+        const { exportToPdfCompleto } = await import('../../lib/export/pdf')
+        await exportToPdfCompleto(filteredProjetos, filteredGastos, filteredReceitas, filteredSessoes, investimentos, aportes, stamp)
       }
     } catch (error) {
       console.error('Falha ao exportar relatorio completo:', error)
-      window.alert('Nao foi possivel gerar o relatorio. Tente novamente.')
+      setExportError('Não foi possível gerar o relatório. Tenta novamente.')
     } finally {
       loadingRef.current = null
-      setTimeout(() => setIsLoading(null), 600)
+      setIsLoading(null)
     }
   }
 
   return (
-    <div className="relative inline-flex items-center gap-2">
-      <input
+    <div className="relative flex flex-wrap items-end gap-2">
+      <label className="flex min-w-[130px] flex-1 flex-col gap-1 text-[10px] font-medium text-[var(--text-muted)] sm:flex-none">
+        De
+        <input
         type="date"
         value={dateRange.start}
         onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
         className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--text-primary)]"
-        title="Data inicial"
+        aria-label="Data inicial do relatório"
       />
-      <span className="text-xs text-[var(--text-muted)]">a</span>
-      <input
+      </label>
+      <label className="flex min-w-[130px] flex-1 flex-col gap-1 text-[10px] font-medium text-[var(--text-muted)] sm:flex-none">
+        Até
+        <input
         type="date"
         value={dateRange.end}
         onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
         className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--text-primary)]"
-        title="Data final"
+        aria-label="Data final do relatório"
       />
+      </label>
+      {invalidDateRange ? <p className="w-full text-xs text-[var(--color-danger)]" role="alert">A data inicial tem de ser anterior ou igual à data final.</p> : null}
+      <p className="w-full text-[10px] text-[var(--text-muted)]">O período filtra receitas, gastos e sessões. Projetos e investimentos são listados à parte e não entram no saldo operacional.</p>
       <div className="relative">
         <button
           className={cx(
@@ -180,7 +202,9 @@ export function ExportCompleto({ projetos, gastos, receitas, sessoes, label = 'E
               ? 'cursor-not-allowed border-[var(--border-subtle)]/50 text-[var(--text-muted)]'
               : 'border-[var(--border-subtle)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--surface-2)]',
           )}
-          disabled={!!isLoading}
+          disabled={!!isLoading || invalidDateRange}
+          aria-expanded={isOpen}
+          aria-haspopup="menu"
           onClick={() => setIsOpen(!isOpen)}
           type="button"
         >
@@ -195,10 +219,11 @@ export function ExportCompleto({ projetos, gastos, receitas, sessoes, label = 'E
         {isOpen ? (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-            <div className="absolute right-0 z-20 mt-1 min-w-[200px] overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] shadow-lg">
+            <div className="absolute right-0 z-20 mt-1 min-w-[220px] overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] shadow-lg" role="menu">
               <button
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-[var(--text-primary)] transition hover:bg-[var(--surface-2)]"
                 onClick={() => handleExport('xlsx')}
+                role="menuitem"
                 type="button"
               >
                 <FileSpreadsheet className="h-4 w-4 text-[var(--color-success)]" />
@@ -213,6 +238,7 @@ export function ExportCompleto({ projetos, gastos, receitas, sessoes, label = 'E
               <button
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-[var(--text-primary)] transition hover:bg-[var(--surface-2)]"
                 onClick={() => handleExport('pdf')}
+                role="menuitem"
                 type="button"
               >
                 <FileText className="h-4 w-4 text-[var(--color-danger)]" />
@@ -227,6 +253,7 @@ export function ExportCompleto({ projetos, gastos, receitas, sessoes, label = 'E
           </>
         ) : null}
       </div>
+      {exportError ? <p className="w-full text-xs text-[var(--color-danger)]" role="alert">{exportError}</p> : null}
     </div>
   )
 }

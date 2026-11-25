@@ -1,11 +1,13 @@
-import type { Gasto, Projeto, Receita, TempoProjeto } from '../types'
-import { formatDate, getClientName, projectDueAmount } from '../format'
+import type { Aporte, Gasto, Investimento, Projeto, Receita, TempoProjeto } from '../types'
+import { formatDate, getClientName, getRelationItem, projectDueAmount } from '../format'
 
 export async function exportToPdfCompleto(
   projetos: Projeto[],
   gastos: Gasto[],
   receitas: Receita[],
   sessoes: TempoProjeto[],
+  investimentos: Investimento[],
+  aportes: Aporte[],
   filename?: string,
 ) {
   const { default: jsPDF } = await import('jspdf')
@@ -140,6 +142,70 @@ export async function exportToPdfCompleto(
         2: { cellWidth: 35 },
         3: { cellWidth: 25, halign: 'right' },
       },
+    })
+    lastY = getLastTableY() + 10
+  }
+
+  if (sessoes.length > 0) {
+    const y = startSection('Sessões do timer')
+    autoTable(doc, {
+      startY: y + 4,
+      head: [['Projeto', 'Início', 'Fim', 'Duração', 'Valor/Hora', 'Descrição']],
+      body: sessoes.map((session) => [
+        getRelationItem(session.projetos)?.titulo ?? 'Projeto removido',
+        formatDate(session.inicio),
+        formatDate(session.fim),
+        `${session.duracao_min ?? 0} min`,
+        session.valor_hora == null ? 'Sem registo' : session.valor_hora.toFixed(2),
+        session.descricao ?? '',
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: [26, 26, 26], textColor: [255, 255, 255], fontSize: 8 },
+      bodyStyles: { fontSize: 7 },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      margin: { left: margin, right: margin },
+    })
+    lastY = getLastTableY() + 10
+  }
+
+  if (investimentos.length > 0) {
+    const y = startSection('Investimentos (fora do saldo operacional)')
+    autoTable(doc, {
+      startY: y + 4,
+      head: [['Nome', 'Tipo', 'Ativo', 'Meta', 'Data da meta']],
+      body: investimentos.map((item) => [
+        item.nome,
+        item.tipo,
+        item.ativo === 1 ? 'Sim' : 'Não',
+        (item.meta_valor ?? 0).toFixed(2),
+        formatDate(item.meta_data),
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: [26, 26, 26], textColor: [255, 255, 255], fontSize: 8 },
+      bodyStyles: { fontSize: 7 },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      margin: { left: margin, right: margin },
+    })
+    lastY = getLastTableY() + 10
+  }
+
+  if (aportes.length > 0) {
+    const y = startSection('Movimentos de investimento (fora do saldo operacional)')
+    autoTable(doc, {
+      startY: y + 4,
+      head: [['Data', 'Investimento', 'Tipo', 'Valor', 'Notas']],
+      body: aportes.map((item) => [
+        formatDate(item.data),
+        getRelationItem(item.investimentos)?.nome ?? 'Investimento removido',
+        item.tipo ?? 'aporte',
+        item.valor.toFixed(2),
+        item.notas ?? '',
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: [26, 26, 26], textColor: [255, 255, 255], fontSize: 8 },
+      bodyStyles: { fontSize: 7 },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      margin: { left: margin, right: margin },
     })
     lastY = getLastTableY() + 10
   }

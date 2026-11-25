@@ -1,9 +1,10 @@
-import { BriefcaseBusiness, Filter, PlusCircle, RefreshCcw, Search, Trash2 } from 'lucide-react'
-import { useDeferredValue, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { BriefcaseBusiness, Filter, Pencil, PlusCircle, RefreshCcw, Search, Trash2 } from 'lucide-react'
+import { useDeferredValue, useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { EmptyState } from '../components/ui/empty-state'
 import { FullScreenLoader } from '../components/ui/full-screen-loader'
 import { PageSectionNav } from '../components/layout/page-section-nav'
+import { ExportDropdown } from '../components/shared/export-dropdown'
 import { Panel } from '../components/ui/panel'
 import { StatCard } from '../components/ui/stat-card'
 import { StatusBadge } from '../components/ui/status-badge'
@@ -22,7 +23,7 @@ import {
   projectDueAmount,
 } from '../lib/format'
 import { getWorkspaceSection } from '../lib/navigation'
-import { createProjeto, deleteProjeto, fetchProjectsSnapshot, updateProjetoStatus } from '../lib/data'
+import { createProjeto, deleteProjeto, fetchProjectsSnapshot, updateProjeto, updateProjetoStatus } from '../lib/data'
 
 const STATUS_OPTIONS = [
   { label: 'Todos os status', value: 'todos' },
@@ -36,16 +37,13 @@ const STATUS_OPTIONS = [
 
 const PROJECT_STATUS_OPTIONS = STATUS_OPTIONS.filter((option) => option.value !== 'todos')
 
-function scrollToProjectForm() {
-  document.getElementById('project-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
 function getProjectStatusLabel(status: string) {
   return PROJECT_STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status
 }
 
 export function ProjectsPage() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { data, error, isLoading, reload } = useAsyncData(fetchProjectsSnapshot)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('todos')
@@ -68,11 +66,46 @@ export function ProjectsPage() {
   const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null)
   const deferredSearch = useDeferredValue(search)
   const section = getWorkspaceSection(location.pathname, '/projetos', 'overview')
+  const editingProjectId = section === 'editar' ? Number(location.pathname.split('/').filter(Boolean)[2]) : null
+  const editingProject = data?.projetos.find((project) => project.id === editingProjectId)
   const sectionNavItems = [
-    { label: 'Overview', to: '/projetos' },
+    { label: 'Visão geral', to: '/projetos' },
     { label: 'Pipeline', to: '/projetos/pipeline' },
     { label: 'Novo projeto', to: '/projetos/novo' },
   ]
+
+  useEffect(() => {
+    if (section === 'novo') {
+      setForm({
+        clientName: '',
+        deadline: '',
+        description: '',
+        notes: '',
+        repoUrl: '',
+        stagingUrl: '',
+        status: 'pendente',
+        title: '',
+        totalValue: '',
+        type: '',
+      })
+    }
+  }, [section])
+
+  useEffect(() => {
+    if (!editingProject) return
+    setForm({
+      clientName: getClientName(editingProject),
+      deadline: editingProject.prazo ?? '',
+      description: editingProject.descricao ?? '',
+      notes: editingProject.notas ?? '',
+      repoUrl: editingProject.repo_url ?? '',
+      stagingUrl: editingProject.staging_url ?? '',
+      status: editingProject.status ?? 'pendente',
+      title: editingProject.titulo,
+      totalValue: String(editingProject.valor_total ?? 0),
+      type: editingProject.tipo ?? '',
+    })
+  }, [editingProject])
 
   if (isLoading && !data) {
     return <FullScreenLoader label="A carregar os projetos..." />
@@ -178,6 +211,35 @@ export function ProjectsPage() {
     }
   }
 
+  async function handleUpdateProject() {
+    if (!editingProjectId) return
+    setFeedback(null)
+    setActionError(null)
+    setIsSubmitting(true)
+
+    try {
+      await updateProjeto(editingProjectId, {
+        clientName: form.clientName,
+        deadline: form.deadline,
+        description: form.description,
+        notes: form.notes,
+        repoUrl: form.repoUrl,
+        stagingUrl: form.stagingUrl,
+        status: form.status,
+        title: form.title,
+        totalValue: form.totalValue ? Number(form.totalValue) : 0,
+        type: form.type,
+      })
+      setFeedback('Projeto atualizado com sucesso.')
+      await reload()
+      navigate('/projetos/pipeline')
+    } catch (caughtError) {
+      setActionError(caughtError instanceof Error ? caughtError.message : 'Não foi possível atualizar o projeto.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   async function handleDeleteProject(projectId: number, projectTitle: string) {
     const shouldDelete = window.confirm(`Remover o projeto "${projectTitle}"? Esta acao apaga receitas e sessoes ligadas.`)
     if (!shouldDelete) {
@@ -228,22 +290,33 @@ export function ProjectsPage() {
         items={sectionNavItems}
       />
 
+      <div className="flex justify-end">
+        <ExportDropdown data={data.projetos} type="projetos" filename="projetos" label="Exportar projetos" />
+      </div>
+
       <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-[1.05fr,0.95fr]">
-        {section === 'novo' ? (
+        {section === 'novo' || section === 'editar' ? (
+          section === 'editar' && !editingProject ? (
+            <Panel
+              actions={<Link className={BUTTON_SECONDARY} to="/projetos/pipeline">Voltar ao pipeline</Link>}
+              description="O projeto pode ter sido removido ou o endereço não é válido."
+              title="Projeto não encontrado"
+            />
+          ) : (
           <Panel
           actions={
             <button
               className={BUTTON_PRIMARY}
               disabled={isSubmitting}
-              onClick={() => void handleCreateProject()}
+              onClick={() => void (section === 'editar' ? handleUpdateProject() : handleCreateProject())}
               type="button"
             >
               <PlusCircle className="mr-2 h-4 w-4" />
-              Criar projeto
+              {section === 'editar' ? 'Guardar alterações' : 'Criar projeto'}
             </button>
           }
-          description="Regista um projeto novo sem sair desta pagina. O cliente e criado automaticamente se ainda nao existir."
-          title="Novo projeto"
+          description={section === 'editar' ? 'Atualiza os dados sem alterar os pagamentos e as horas já registados.' : 'Regista um projeto novo. O cliente é criado automaticamente se ainda não existir.'}
+          title={section === 'editar' ? 'Editar projeto' : 'Novo projeto'}
         >
           <div className="grid gap-4 md:grid-cols-2" id="project-form">
             <label className="space-y-2">
@@ -363,6 +436,7 @@ export function ProjectsPage() {
           {feedback ? <p className="mt-4 text-sm text-[var(--color-success)]">{feedback}</p> : null}
           {actionError ? <p className="mt-4 text-sm text-[var(--color-danger)]">{actionError}</p> : null}
           </Panel>
+          )
         ) : null}
 
         {['overview', 'pipeline'].includes(section) ? (
@@ -546,6 +620,15 @@ export function ProjectsPage() {
                           ))}
                         </select>
 
+                        <Link
+                          aria-label={`Editar ${project.titulo}`}
+                          className={`${BUTTON_SECONDARY} px-3 py-2 text-xs`}
+                          to={`/projetos/editar/${project.id}`}
+                        >
+                          <Pencil aria-hidden="true" className="mr-2 h-3.5 w-3.5" />
+                          Editar projeto
+                        </Link>
+
                         <button
                           className={`${BUTTON_SECONDARY} px-3 py-2 text-xs`}
                           disabled={deletingId === project.id || updatingStatusId === project.id}
@@ -569,12 +652,12 @@ export function ProjectsPage() {
         ) : isDatabaseEmpty ? (
           <EmptyState
             action={
-              <button className={BUTTON_PRIMARY} onClick={scrollToProjectForm} type="button">
+              <Link className={BUTTON_PRIMARY} to="/projetos/novo">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Criar primeiro projeto
-              </button>
+              </Link>
             }
-            description="A base ainda esta vazia, mas agora ja podes abrir o primeiro projeto diretamente por aqui sem tocar no Supabase."
+            description="Ainda não tens projetos. Cria o primeiro para acompanhar o trabalho e os valores associados."
             icon={BriefcaseBusiness}
             tags={['Criacao direta', 'Cliente automatico', 'Sem dados falsos']}
             title="Nenhum projeto registado"

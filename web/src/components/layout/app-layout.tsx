@@ -2,6 +2,7 @@ import {
   BarChart3,
   BriefcaseBusiness,
   Clock3,
+  Database,
   Landmark,
   Menu,
   Moon,
@@ -11,15 +12,16 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAsyncData } from '../../hooks/use-data'
 import { useNavigationShortcuts } from '../../hooks/use-keyboard-shortcuts'
 import { fetchConfiguracoes, saveConfiguracoes } from '../../lib/data'
+import { readBrowserPreference, saveBrowserPreference } from '../../lib/browser-storage'
 
 const NAV_ITEMS = [
   { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
   { icon: BriefcaseBusiness, label: 'Projetos', path: '/projetos' },
-  { icon: Wallet, label: 'Financas', path: '/financas' },
+  { icon: Wallet, label: 'Finanças', path: '/financas' },
   { icon: Landmark, label: 'Investimentos', path: '/investimentos' },
   { icon: Clock3, label: 'Timer', path: '/timer' },
   { icon: Settings2, label: 'Config', path: '/config' },
@@ -27,40 +29,40 @@ const NAV_ITEMS = [
 
 const PAGE_TITLES = [
   {
-    eyebrow: 'Preferencias',
+    eyebrow: 'Preferências',
     path: '/config',
-    subtitle: 'Ajustes pessoais, moeda e parametros do teu cockpit financeiro.',
-    title: 'Configuracoes',
+    subtitle: 'Preferências pessoais, alertas e cópias dos teus dados.',
+    title: 'Definições',
   },
   {
     eyebrow: 'Visao geral',
     path: '/dashboard',
-    subtitle: 'Resumo executivo, atalhos e leitura rapida do negocio.',
+    subtitle: 'Uma leitura clara dos projetos, entradas e despesas do teu negócio.',
     title: 'Dashboard',
   },
   {
-    eyebrow: 'Fluxo financeiro',
+    eyebrow: 'Visão financeira',
     path: '/financas',
-    subtitle: 'Caixa, lancamentos, agenda e leitura anual em paginas separadas.',
-    title: 'Financas',
+    subtitle: 'Entradas, despesas e evolução financeira num só lugar.',
+    title: 'Finanças',
   },
   {
-    eyebrow: 'Patrimonio',
+    eyebrow: 'Património',
     path: '/investimentos',
-    subtitle: 'Carteira, movimentos e metas organizados por tarefa.',
+    subtitle: 'Acompanha a carteira e os movimentos que registas.',
     title: 'Investimentos',
   },
   {
     eyebrow: 'Pipeline',
     path: '/projetos',
-    subtitle: 'Criacao, filtro e acompanhamento de projetos sem sobrecarregar a mesma tela.',
+    subtitle: 'Organiza oportunidades e acompanha o trabalho em curso.',
     title: 'Projetos',
   },
   {
-    eyebrow: 'Foco',
+    eyebrow: 'Tempo e foco',
     path: '/timer',
-    subtitle: 'Timer, faturacao e historico divididos por necessidade operacional.',
-    title: 'Timer de trabalho',
+    subtitle: 'Regista sessões de trabalho e acompanha o tempo faturável.',
+    title: 'Tempo de trabalho',
   },
 ]
 
@@ -76,7 +78,7 @@ export function AppLayout() {
       return 'light'
     }
 
-    const stored = window.localStorage.getItem(THEME_STORAGE_KEY)
+    const stored = readBrowserPreference(THEME_STORAGE_KEY)
     return stored === 'dark' ? 'dark' : 'light'
   })
   const [themeOverride, setThemeOverride] = useState<ThemeMode | null>(null)
@@ -88,7 +90,7 @@ export function AppLayout() {
   const handleThemeChange = async (newTheme: ThemeMode) => {
     setThemeOverride(newTheme)
     document.documentElement.setAttribute('data-theme', newTheme)
-    window.localStorage.setItem(THEME_STORAGE_KEY, newTheme)
+    saveBrowserPreference(THEME_STORAGE_KEY, newTheme)
     
     // Salvar na base de dados
     if (configuracoes) {
@@ -147,15 +149,15 @@ export function AppLayout() {
   }, [mobileMenuOpen, location.pathname])
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[var(--bg-canvas)] text-[var(--text-primary)]">
-      <div className="relative mx-auto flex min-h-screen max-w-[1680px] flex-col lg:flex-row lg:px-4">
+    <div className="relative min-h-dvh overflow-x-hidden bg-[var(--bg-canvas)] text-[var(--text-primary)] lg:h-dvh lg:min-h-0 lg:overflow-hidden">
+      <div className="relative flex min-h-dvh flex-col lg:h-full lg:min-h-0 lg:flex-row">
         {/* Mobile top bar (logo + hamburger) */}
-        <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-canvas)] px-4 py-3 lg:hidden">
+        <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] px-4 py-3 text-[var(--sidebar-text)] lg:hidden">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--brand)] text-sm font-bold text-[var(--inverted-text)]">
-              D
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#315FEA] text-sm font-extrabold text-white">
+              d.
             </div>
-            <span className="font-['Space_Grotesk',sans-serif] text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+            <span className="font-['Manrope',sans-serif] text-lg font-bold tracking-tight text-[var(--sidebar-text)]">
               DevFlow
             </span>
           </div>
@@ -163,7 +165,7 @@ export function AppLayout() {
             aria-controls="app-sidebar"
             aria-expanded={mobileMenuOpen}
             aria-label={mobileMenuOpen ? 'Fechar menu de navegacao' : 'Abrir menu de navegacao'}
-            className="flex h-10 w-10 items-center justify-center rounded-md text-[var(--text-muted)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text-primary)]"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-[var(--sidebar-muted)] transition-colors hover:bg-[var(--sidebar-active)] hover:text-[var(--sidebar-text)]"
             onClick={() => setMobileMenuState({ open: !mobileMenuOpen, pathname: location.pathname })}
             type="button"
           >
@@ -183,23 +185,23 @@ export function AppLayout() {
         <aside
           id="app-sidebar"
           className={[
-            'fixed inset-y-0 left-0 z-50 flex w-[75vw] max-w-[280px] flex-col border-r border-[var(--border-subtle)] bg-[var(--bg-canvas)] px-4 py-6 shadow-2xl transition-[transform,visibility] duration-300 ease-out lg:visible lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[220px] lg:translate-x-0 lg:overflow-y-auto lg:border-r lg:border-[var(--border-subtle)] lg:px-4 lg:py-6 lg:shadow-none',
+            'fixed inset-y-0 left-0 z-50 flex w-[82vw] max-w-[292px] flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] px-4 py-5 text-[var(--sidebar-text)] shadow-2xl transition-[transform,visibility] duration-300 ease-out lg:visible lg:sticky lg:top-0 lg:z-auto lg:h-full lg:w-[248px] lg:translate-x-0 lg:overflow-y-auto lg:px-5 lg:py-6 lg:shadow-none',
             mobileMenuOpen ? 'visible translate-x-0' : 'invisible -translate-x-full',
           ].join(' ')}
         >
           {/* Logo + close on mobile */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--brand)] text-sm font-bold text-[var(--inverted-text)]">
-                D
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#315FEA] text-sm font-extrabold text-white">
+                d.
               </div>
-              <span className="font-['Space_Grotesk',sans-serif] text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+              <span className="font-['Manrope',sans-serif] text-lg font-bold tracking-tight text-[var(--sidebar-text)]">
                 DevFlow
               </span>
             </div>
             <button
               aria-label="Fechar menu de navegacao"
-              className="flex h-10 w-10 items-center justify-center rounded-md text-[var(--text-muted)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text-primary)] lg:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-[var(--sidebar-muted)] transition-colors hover:bg-[var(--sidebar-active)] hover:text-[var(--sidebar-text)] lg:hidden"
               onClick={closeMobile}
               type="button"
             >
@@ -207,16 +209,17 @@ export function AppLayout() {
             </button>
           </div>
 
-          <div className="mt-6 flex items-center gap-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3 py-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--brand-soft)] text-xs font-semibold text-[var(--brand)]">
+          <div className="mt-7 flex items-center gap-3 rounded-xl border border-[var(--sidebar-border)] bg-white/[0.035] px-3 py-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#315FEA]/15 text-xs font-semibold text-[#9BB8FF]">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-[var(--text-primary)]">{displayName}</p>
+              <p className="truncate text-sm font-semibold text-[var(--sidebar-text)]">{displayName}</p>
+              <p className="mt-0.5 truncate text-[11px] text-[var(--sidebar-muted)]">Espaço de trabalho local</p>
             </div>
           </div>
 
-          <nav aria-label="Navegacao principal" className="mt-6 flex-1 space-y-1">
+          <nav aria-label="Navegação principal" className="mt-7 flex-1 space-y-1.5">
             {NAV_ITEMS.map(({ icon: Icon, label, path }) => (
               <NavLink
                 key={path}
@@ -224,14 +227,14 @@ export function AppLayout() {
                 onClick={closeMobile}
                 className={({ isActive }) =>
                   [
-                    'group flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition',
+                    'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                     isActive
-                      ? 'border-l-[3px] border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]'
-                      : 'border-l-[3px] border-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-2)] hover:text-[var(--text-primary)]',
+                      ? 'bg-[var(--sidebar-active)] text-white'
+                      : 'text-[var(--sidebar-muted)] hover:bg-white/[0.045] hover:text-white',
                   ].join(' ')
                 }
               >
-                <Icon className="h-4 w-4" />
+                <Icon className={['h-[18px] w-[18px]', location.pathname.startsWith(path) ? 'text-[#9BB8FF]' : ''].join(' ')} />
                 {label}
               </NavLink>
             ))}
@@ -240,35 +243,44 @@ export function AppLayout() {
 
         </aside>
 
-        <div className="flex min-h-screen flex-1 flex-col">
-          <header className="sticky top-16 z-20 border-b border-[var(--border-subtle)] bg-[var(--surface-1)]/90 px-4 py-2 backdrop-blur-md md:px-6 md:py-3 lg:top-0 lg:px-8">
-            <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between">
+        <div className="flex min-h-0 flex-1 flex-col lg:h-full">
+          <header className="sticky top-[57px] z-20 shrink-0 border-b border-[var(--border-subtle)] bg-[var(--bg-canvas)]/95 px-4 py-3 backdrop-blur-md md:px-7 lg:static lg:px-9">
+            <div className="mx-auto flex w-full max-w-[1480px] items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-[10px] font-medium uppercase tracking-[0.1em] text-[var(--text-muted)] md:text-[11px]">{heading.eyebrow}</p>
-                <h2 className="mt-0.5 text-lg font-bold leading-tight tracking-tight text-[var(--text-primary)] sm:text-xl md:text-2xl lg:text-[32px]" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--text-muted)] md:text-[11px]">{heading.eyebrow}</p>
+                <h1 className="mt-1 font-['Manrope',sans-serif] text-xl font-extrabold leading-tight tracking-[-0.04em] text-[var(--text-primary)] sm:text-2xl lg:text-[30px]">
                   {heading.title}
-                </h2>
+                </h1>
+                <p className="mt-1 hidden text-xs text-[var(--text-secondary)] sm:block md:text-sm">{heading.subtitle}</p>
               </div>
 
               <div className="flex items-center gap-1.5 md:gap-2">
                 <button
                   aria-label={isDark ? 'Ativar tema claro' : 'Ativar tema escuro'}
-                  className="flex h-9 w-9 items-center justify-center rounded-md text-[var(--text-muted)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text-primary)]"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--text-primary)]"
                   onClick={() => void handleThemeChange(theme === 'dark' ? 'light' : 'dark')}
                   type="button"
                 >
                   {isDark ? <SunMedium className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </button>
-                <span className="hidden truncate text-xs text-[var(--text-muted)] sm:inline max-w-[100px] md:max-w-[160px]">{displayName}</span>
+                <span className="hidden max-w-[160px] truncate text-xs font-medium text-[var(--text-secondary)] sm:inline">{displayName}</span>
               </div>
             </div>
           </header>
 
-          <main className="flex-1 px-3 py-3 md:px-6 md:py-6 lg:px-8 lg:py-7">
-            <div className="mx-auto w-full max-w-[1280px]">
-              <p className="mb-5 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] px-4 py-3 text-sm text-[var(--text-muted)]">
-                Os teus dados ficam apenas neste navegador. Se limpares os dados do site ou do navegador, o teu histórico será apagado sem recuperação. Exporta uma cópia para guardar os teus registos.
-              </p>
+          <main className="min-h-0 flex-1 px-4 py-5 sm:px-6 md:py-7 lg:overflow-y-auto lg:px-9 lg:py-8">
+            <div className="mx-auto w-full max-w-[1480px]">
+              <div className="mb-5 flex flex-col gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3 text-xs text-[var(--text-secondary)] sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-start gap-2.5">
+                  <Database aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+                  <p>
+                    Os teus dados ficam neste navegador. Limpar os dados do site apaga o histórico.
+                  </p>
+                </div>
+                <Link className="shrink-0 font-medium text-[var(--text-primary)] underline decoration-[var(--border-strong)] underline-offset-4 hover:decoration-current" to="/config#backup">
+                  Criar cópia
+                </Link>
+              </div>
               <Outlet />
             </div>
           </main>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EXPORT_PRESETS, getExportFilename, type ExportPreset } from '../lib/export/export'
+import { buildCsv, EXPORT_PRESETS, getExportFilename, type ExportPreset } from '../lib/export/export'
 
 describe('EXPORT_PRESETS', () => {
   it('defines receitas preset', () => {
@@ -71,5 +71,23 @@ describe('getExportFilename', () => {
       filename: (suffix?: string) => `test-${suffix ?? ''}`,
     }
     expect(getExportFilename(preset, 'june')).toBe('test-june')
+  })
+})
+
+describe('buildCsv', () => {
+  it('creates a spreadsheet-friendly UTF-8 CSV and protects formula-like text', () => {
+    const csv = buildCsv(
+      [
+        { label: 'Descrição', value: (row: { description: string }) => row.description },
+        { label: 'Valor', value: (row: { value: number }) => row.value },
+      ],
+      [{ description: '=HYPERLINK("https://example.invalid")', value: 12.5 }],
+    )
+
+    expect(csv.startsWith('\uFEFF')).toBe(true)
+    expect(csv).toContain('Descrição;Valor')
+    expect(csv).toContain("'=HYPERLINK")
+    expect(csv).toContain('12,5')
+    expect(csv).toContain('\r\n')
   })
 })

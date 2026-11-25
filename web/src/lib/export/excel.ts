@@ -1,7 +1,8 @@
 import type ExcelJS from 'exceljs'
 import type { ExportColumn, ExportPreset } from './export'
-import type { Gasto, Projeto, Receita, TempoProjeto } from '../types'
-import { formatDate } from '../format'
+import type { Aporte, Gasto, Investimento, Projeto, Receita, TempoProjeto } from '../types'
+import { formatDate, getRelationItem } from '../format'
+import { downloadBlob } from '../download'
 
 function autoFitColumns(worksheet: ExcelJS.Worksheet) {
   worksheet.columns?.forEach((column) => {
@@ -88,12 +89,16 @@ function fillDataRows<Row>(
       rowData[col.key] = col.value(row) ?? ''
     })
     const excelRow = ws.addRow(rowData)
-    excelRow.eachCell((cell) => {
+    excelRow.eachCell((cell, columnIndex) => {
       cell.font = { size: 10, name: 'Calibri', color: { argb: 'FF333333' } }
       cell.alignment = { vertical: 'middle' }
       cell.border = { bottom: { style: 'thin', color: { argb: 'FFE0E0E0' } } }
       if (index % 2 === 1) {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F5' } }
+      }
+      const key = columns[columnIndex - 1]?.key
+      if (typeof cell.value === 'number' && /valor|total|aberto|pago|meta/i.test(key ?? '')) {
+        cell.numFmt = '#,##0.00'
       }
     })
   })
@@ -104,14 +109,7 @@ function fillDataRows<Row>(
 async function saveWorkbook(workbook: ExcelJS.Workbook, filename: string) {
   const buffer = await workbook.xlsx.writeBuffer()
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `${filename}.xlsx`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  downloadBlob(`${filename}.xlsx`, blob)
 }
 
 export async function exportToXlsx<Row>(
@@ -139,6 +137,8 @@ export async function exportToXlsxCompleto(
   gastos: Gasto[],
   receitas: Receita[],
   sessoes: TempoProjeto[],
+  investimentos: Investimento[],
+  aportes: Aporte[],
   suffix?: string,
 ): Promise<void> {
   const { default: ExcelJS } = await import('exceljs')
@@ -220,9 +220,9 @@ export async function exportToXlsxCompleto(
     }},
     { key: 'projeto', label: 'Projeto', value: (p: Projeto) => p.titulo },
     { key: 'status', label: 'Status', value: (p: Projeto) => p.status ?? 'pendente' },
-    { key: 'valor_total', label: 'Valor total', value: (p: Projeto) => (p.valor_total ?? 0).toFixed(2) },
-    { key: 'valor_pago', label: 'Valor pago', value: (p: Projeto) => (p.valor_pago ?? 0).toFixed(2) },
-    { key: 'em_aberto', label: 'Em aberto', value: (p: Projeto) => Math.max((p.valor_total ?? 0) - (p.valor_pago ?? 0), 0).toFixed(2) },
+    { key: 'valor_total', label: 'Valor total', value: (p: Projeto) => p.valor_total ?? 0 },
+    { key: 'valor_pago', label: 'Valor pago', value: (p: Projeto) => p.valor_pago ?? 0 },
+    { key: 'em_aberto', label: 'Em aberto', value: (p: Projeto) => Math.max((p.valor_total ?? 0) - (p.valor_pago ?? 0), 0) },
     { key: 'prazo', label: 'Prazo', value: (p: Projeto) => formatDate(p.prazo) },
   ] as ExportColumn<Projeto>[]
   styleHeaderRow(wsProj, projCols)
@@ -234,7 +234,7 @@ export async function exportToXlsxCompleto(
     { key: 'data', label: 'Data', value: (g: Gasto) => formatDate(g.data) },
     { key: 'descricao', label: 'Descrição', value: (g: Gasto) => g.descricao },
     { key: 'categoria', label: 'Categoria', value: (g: Gasto) => g.categoria_nome || 'Sem categoria' },
-    { key: 'valor', label: 'Valor', value: (g: Gasto) => (g.valor || 0).toFixed(2) },
+    { key: 'valor', label: 'Valor', value: (g: Gasto) => g.valor || 0 },
     { key: 'metodo', label: 'Método', value: (g: Gasto) => g.metodo ?? '' },
     { key: 'pago', label: 'Pago', value: (g: Gasto) => g.pago === 1 ? 'Sim' : 'Não' },
   ] as ExportColumn<Gasto>[]
@@ -246,7 +246,7 @@ export async function exportToXlsxCompleto(
   const recCols = [
     { key: 'data', label: 'Data', value: (r: Receita) => formatDate(r.data) },
     { key: 'descricao', label: 'Descrição', value: (r: Receita) => r.descricao },
-    { key: 'valor', label: 'Valor', value: (r: Receita) => (r.valor || 0).toFixed(2) },
+    { key: 'valor', label: 'Valor', value: (r: Receita) => r.valor || 0 },
     { key: 'origem', label: 'Origem', value: (r: Receita) => r.origem ?? '' },
     { key: 'projeto', label: 'Projeto', value: (r: Receita) => {
       const rel = r.projetos
@@ -256,6 +256,41 @@ export async function exportToXlsxCompleto(
   ] as ExportColumn<Receita>[]
   styleHeaderRow(wsRec, recCols)
   fillDataRows(wsRec, recCols, receitas)
+
+  // Investimentos ficam em abas próprias e não alteram receitas, gastos ou saldo.
+  const wsInvestimentos = workbook.addWorksheet('Investimentos')
+  const investmentCols = [
+    { key: 'nome', label: 'Investimento', value: (item: Investimento) => item.nome },
+    { key: 'tipo', label: 'Tipo', value: (item: Investimento) => item.tipo },
+    { key: 'ativo', label: 'Ativo', value: (item: Investimento) => item.ativo === 1 ? 'Sim' : 'Não' },
+    { key: 'meta_valor', label: 'Meta', value: (item: Investimento) => item.meta_valor ?? 0 },
+    { key: 'meta_data', label: 'Data da meta', value: (item: Investimento) => formatDate(item.meta_data) },
+  ] as ExportColumn<Investimento>[]
+  styleHeaderRow(wsInvestimentos, investmentCols)
+  fillDataRows(wsInvestimentos, investmentCols, investimentos)
+
+  const wsAportes = workbook.addWorksheet('Movimentos de Investimento')
+  const contributionCols = [
+    { key: 'data', label: 'Data', value: (item: Aporte) => formatDate(item.data) },
+    { key: 'investimento', label: 'Investimento', value: (item: Aporte) => getRelationItem(item.investimentos)?.nome ?? 'Investimento removido' },
+    { key: 'tipo', label: 'Tipo', value: (item: Aporte) => item.tipo ?? 'aporte' },
+    { key: 'valor', label: 'Valor', value: (item: Aporte) => item.valor },
+    { key: 'notas', label: 'Notas', value: (item: Aporte) => item.notas ?? '' },
+  ] as ExportColumn<Aporte>[]
+  styleHeaderRow(wsAportes, contributionCols)
+  fillDataRows(wsAportes, contributionCols, aportes)
+
+  const wsSessions = workbook.addWorksheet('Sessões do Timer')
+  const sessionCols = [
+    { key: 'projeto', label: 'Projeto', value: (item: TempoProjeto) => getRelationItem(item.projetos)?.titulo ?? 'Projeto removido' },
+    { key: 'inicio', label: 'Início', value: (item: TempoProjeto) => formatDate(item.inicio) },
+    { key: 'fim', label: 'Fim', value: (item: TempoProjeto) => formatDate(item.fim) },
+    { key: 'duracao', label: 'Duração (min)', value: (item: TempoProjeto) => item.duracao_min ?? 0 },
+    { key: 'valor_hora', label: 'Valor/Hora registado', value: (item: TempoProjeto) => item.valor_hora ?? '' },
+    { key: 'descricao', label: 'Descrição', value: (item: TempoProjeto) => item.descricao ?? '' },
+  ] as ExportColumn<TempoProjeto>[]
+  styleHeaderRow(wsSessions, sessionCols)
+  fillDataRows(wsSessions, sessionCols, sessoes)
 
   const stamp = suffix ? `-${suffix}` : `-${new Date().toISOString().slice(0, 10)}`
   await saveWorkbook(workbook, `devflow-completo${stamp}`)

@@ -42,6 +42,7 @@ export interface DbGasto {
 
 export interface DbReceita {
   id?: number
+  pagamento_id?: number | null
   projeto_id: number | null
   descricao: string
   valor: number
@@ -78,6 +79,7 @@ export interface DbTempoProjeto {
   fim: string | null
   duracao_min: number | null
   descricao: string | null
+  valor_hora?: number | null
   criado_em: string | null
 }
 
@@ -118,6 +120,21 @@ export class DevFlowDB extends Dexie {
       tempo_projeto: '++id, projeto_id, inicio',
       configuracoes: 'chave',
       pagamentos: '++id, projeto_id',
+    })
+    this.version(3).stores({
+      clientes: '++id, nome',
+      projetos: '++id, cliente_id, status, prazo',
+      gastos: '++id, data, categoria_nome, pago',
+      receitas: '++id, data, projeto_id',
+      investimentos: '++id, nome, tipo, criado_em',
+      aportes: '++id, investimento_id, data, tipo',
+      tempo_projeto: '++id, projeto_id, inicio',
+      configuracoes: 'chave',
+      pagamentos: '++id, projeto_id',
+    }).upgrade(async (transaction) => {
+      await transaction.table('tempo_projeto').toCollection().modify((session) => {
+        if (session.valor_hora === undefined) session.valor_hora = null
+      })
     })
   }
 }

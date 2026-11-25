@@ -1,8 +1,9 @@
-import { PlusCircle, RefreshCcw, Trash2 } from 'lucide-react'
+import { Pencil, PlusCircle, RefreshCcw, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { FullScreenLoader } from '../components/ui/full-screen-loader'
 import { PageSectionNav } from '../components/layout/page-section-nav'
+import { ExportDropdown } from '../components/shared/export-dropdown'
 import { Panel } from '../components/ui/panel'
 import { StatCard } from '../components/ui/stat-card'
 import { useAsyncData } from '../hooks/use-data'
@@ -26,10 +27,13 @@ import {
   deleteAporte,
   deleteInvestimento,
   fetchInvestmentsSnapshot,
+  updateAporte,
+  updateInvestimento,
 } from '../lib/data'
 
 export function InvestmentsPage() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { data, error, isLoading, reload } = useAsyncData(fetchInvestmentsSnapshot)
   const [investmentForm, setInvestmentForm] = useState({
     active: true,
@@ -51,11 +55,16 @@ export function InvestmentsPage() {
   const [submittingForm, setSubmittingForm] = useState<'investment' | 'movement' | null>(null)
   const [deletingInvestmentId, setDeletingInvestmentId] = useState<number | null>(null)
   const [deletingMovementId, setDeletingMovementId] = useState<number | null>(null)
-  const section = getWorkspaceSection(location.pathname, '/investimentos', 'overview')
+  const [editingInvestmentId, setEditingInvestmentId] = useState<number | null>(null)
+  const [editingMovementId, setEditingMovementId] = useState<number | null>(null)
+  const section = location.pathname.startsWith('/investimentos/movimentos/novo')
+    ? 'movimento'
+    : getWorkspaceSection(location.pathname, '/investimentos', 'overview')
   const sectionNavItems = [
-    { label: 'Overview', to: '/investimentos' },
+    { label: 'Visão geral', to: '/investimentos' },
     { label: 'Carteira', to: '/investimentos/carteira' },
-    { label: 'Novo', to: '/investimentos/novo' },
+    { label: 'Novo ativo', to: '/investimentos/novo' },
+    { label: 'Novo movimento', to: '/investimentos/movimentos/novo' },
   ]
 
   const [prevInvestData, setPrevInvestData] = useState(data)
@@ -130,14 +139,16 @@ export function InvestmentsPage() {
     setSubmittingForm('investment')
 
     try {
-      await createInvestimento({
+      const input = {
         active: investmentForm.active,
         name: investmentForm.name,
         notes: investmentForm.notes,
         targetDate: investmentForm.targetDate || null,
         targetValue: investmentForm.targetValue ? Number(investmentForm.targetValue) : null,
         type: investmentForm.type,
-      })
+      }
+      if (editingInvestmentId) await updateInvestimento(editingInvestmentId, input)
+      else await createInvestimento(input)
 
       setInvestmentForm({
         active: true,
@@ -147,7 +158,8 @@ export function InvestmentsPage() {
         targetValue: '',
         type: '',
       })
-      setFeedback('Investimento criado com sucesso.')
+      setFeedback(editingInvestmentId ? 'Investimento atualizado com sucesso.' : 'Investimento criado com sucesso.')
+      setEditingInvestmentId(null)
       await reload()
     } catch (caughtError) {
       setActionError(
@@ -164,13 +176,15 @@ export function InvestmentsPage() {
     setSubmittingForm('movement')
 
     try {
-      await createAporte({
+      const input = {
         date: movementForm.date,
         investmentId: Number(movementForm.investmentId),
         notes: movementForm.notes,
         type: movementForm.type,
         value: movementForm.value ? Number(movementForm.value) : 0,
-      })
+      }
+      if (editingMovementId) await updateAporte(editingMovementId, input)
+      else await createAporte(input)
 
       setMovementForm((current) => ({
         ...current,
@@ -179,7 +193,8 @@ export function InvestmentsPage() {
         type: 'aporte',
         value: '',
       }))
-      setFeedback('Movimento registado com sucesso.')
+      setFeedback(editingMovementId ? 'Movimento atualizado com sucesso.' : 'Movimento registado com sucesso.')
+      setEditingMovementId(null)
       await reload()
     } catch (caughtError) {
       setActionError(caughtError instanceof Error ? caughtError.message : 'Nao foi possivel registar o movimento.')
@@ -234,6 +249,40 @@ export function InvestmentsPage() {
     }
   }
 
+  function handleEditInvestment(item: (typeof investimentos)[number]) {
+    setEditingInvestmentId(item.id)
+    setEditingMovementId(null)
+    setInvestmentForm({
+      active: item.ativo === 1,
+      name: item.nome,
+      notes: item.notas ?? '',
+      targetDate: item.meta_data ?? '',
+      targetValue: item.meta_valor?.toString() ?? '',
+      type: item.tipo,
+    })
+    navigate('/investimentos/novo')
+  }
+
+  function handleEditMovement(item: (typeof aportes)[number]) {
+    setEditingMovementId(item.id)
+    setEditingInvestmentId(null)
+    setMovementForm({
+      date: item.data,
+      investmentId: item.investimento_id?.toString() ?? '',
+      notes: item.notas ?? '',
+      type: item.tipo ?? 'aporte',
+      value: String(item.valor),
+    })
+    navigate('/investimentos/movimentos/novo')
+  }
+
+  function cancelEdit() {
+    setEditingInvestmentId(null)
+    setEditingMovementId(null)
+    setInvestmentForm({ active: true, name: '', notes: '', targetDate: '', targetValue: '', type: '' })
+    setMovementForm({ date: formatInputDateValue(), investmentId: investimentos[0] ? String(investimentos[0].id) : '', notes: '', type: 'aporte', value: '' })
+  }
+
   return (
     <div className="space-y-6">
       <PageSectionNav
@@ -241,10 +290,13 @@ export function InvestmentsPage() {
         items={sectionNavItems}
       />
 
-      {section === 'novo' ? (
-<div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-2">
-        <Panel
+      {['novo', 'movimento'].includes(section) ? (
+        <div className="grid gap-6">
+        {section === 'novo' ? <Panel
+          id="investment-form"
           actions={
+            <div className="flex flex-wrap gap-2">
+            {editingInvestmentId || editingMovementId ? <button className={BUTTON_SECONDARY} onClick={cancelEdit} type="button"><X className="mr-2 h-4 w-4" />Cancelar edição</button> : null}
             <button
               className={BUTTON_PRIMARY}
               disabled={submittingForm === 'investment'}
@@ -252,8 +304,9 @@ export function InvestmentsPage() {
               type="button"
             >
               <PlusCircle className="mr-2 h-4 w-4" />
-              Criar investimento
+              {editingInvestmentId ? 'Guardar investimento' : 'Criar investimento'}
             </button>
+            </div>
           }
           description="Regista um novo ativo com meta opcional e estado ativo."
           title="Novo investimento"
@@ -330,9 +383,10 @@ export function InvestmentsPage() {
               />
             </label>
           </div>
-        </Panel>
+        </Panel> : null}
 
-        <Panel
+        {section === 'movimento' ? <Panel
+          id="investment-movement-form"
           actions={
             <button
               className={BUTTON_PRIMARY}
@@ -341,7 +395,7 @@ export function InvestmentsPage() {
               type="button"
             >
               <PlusCircle className="mr-2 h-4 w-4" />
-              Registar movimento
+              {editingMovementId ? 'Guardar movimento' : 'Registar movimento'}
             </button>
           }
           description="Adiciona aportes, resgates ou rendimentos a um investimento existente."
@@ -419,14 +473,16 @@ export function InvestmentsPage() {
               Cria primeiro um investimento para poderes registar movimentos.
             </p>
           ) : null}
-        </Panel>
+        </Panel> : null}
         </div>
       ) : null}
 
       {feedback ? <p className="text-sm text-[var(--color-success)]">{feedback}</p> : null}
       {actionError ? <p className="text-sm text-[var(--color-danger)]">{actionError}</p> : null}
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        <ExportDropdown data={investimentos} type="investimentos" filename="investimentos" label="Exportar ativos" />
+        <ExportDropdown data={aportes} type="aportes" filename="movimentos-investimentos" label="Exportar movimentos" />
         <button className={BUTTON_SECONDARY} onClick={() => void reload()} type="button">
           <RefreshCcw className="mr-2 h-4 w-4" />
           Atualizar
@@ -467,6 +523,13 @@ export function InvestmentsPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-mono text-xs text-[var(--text-secondary)]">{formatCurrency(totalItem, currency)}</span>
+                        <button
+                          className={`${BUTTON_SECONDARY} px-3 py-2 text-xs`}
+                          onClick={() => handleEditInvestment(investment)}
+                          type="button"
+                        >
+                          <Pencil className="mr-2 h-3.5 w-3.5" />Editar
+                        </button>
                         <button
                           className={`${BUTTON_SECONDARY} px-3 py-2 text-xs`}
                           disabled={deletingInvestmentId === investment.id}
@@ -563,6 +626,13 @@ export function InvestmentsPage() {
                       {formatCurrency(item.valor, currency)}
                     </td>
                     <td className="rounded-r-2xl border-y border-r border-[var(--border-subtle)] bg-[var(--surface-1)] px-4 py-3">
+                      <button
+                        className={`${BUTTON_SECONDARY} mr-2 px-3 py-2 text-xs`}
+                        onClick={() => handleEditMovement(item)}
+                        type="button"
+                      >
+                        <Pencil className="mr-2 h-3.5 w-3.5" />Editar
+                      </button>
                       <button
                         className={`${BUTTON_SECONDARY} px-3 py-2 text-xs`}
                         disabled={deletingMovementId === item.id}
