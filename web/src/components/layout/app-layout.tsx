@@ -24,7 +24,7 @@ const NAV_ITEMS = [
   { icon: Wallet, label: 'Finanças', path: '/financas' },
   { icon: Landmark, label: 'Investimentos', path: '/investimentos' },
   { icon: Clock3, label: 'Timer', path: '/timer' },
-  { icon: Settings2, label: 'Config', path: '/config' },
+  { icon: Settings2, label: 'Definições', path: '/config' },
 ]
 
 const PAGE_TITLES = [
@@ -35,7 +35,7 @@ const PAGE_TITLES = [
     title: 'Definições',
   },
   {
-    eyebrow: 'Visao geral',
+    eyebrow: 'Bom ter-te por aqui',
     path: '/dashboard',
     subtitle: 'Uma leitura clara dos projetos, entradas e despesas do teu negócio.',
     title: 'Dashboard',
@@ -53,7 +53,7 @@ const PAGE_TITLES = [
     title: 'Investimentos',
   },
   {
-    eyebrow: 'Pipeline',
+    eyebrow: 'Trabalho',
     path: '/projetos',
     subtitle: 'Organiza oportunidades e acompanha o trabalho em curso.',
     title: 'Projetos',
@@ -239,8 +239,10 @@ export function AppLayout() {
               </NavLink>
             ))}
           </nav>
-
-
+          <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.04] p-3.5">
+            <p className="text-xs font-medium text-white/85">Os teus dados são locais</p>
+            <p className="mt-1.5 text-[11px] leading-relaxed text-white/45">Este espaço guarda tudo neste navegador. Exporta cópias para manter o teu histórico.</p>
+          </div>
         </aside>
 
         <div className="flex min-h-0 flex-1 flex-col lg:h-full">

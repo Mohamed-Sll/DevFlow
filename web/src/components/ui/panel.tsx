@@ -25,7 +25,7 @@ export function Panel({ actions, children, className, description, id, icon, tit
         <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
             {icon ? (
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] text-sm">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-soft)] text-sm text-[var(--brand)]">
                 {icon}
               </span>
             ) : null}
