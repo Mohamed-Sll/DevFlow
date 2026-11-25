@@ -1,5 +1,6 @@
 import type { Aporte, Gasto, Investimento, Projeto, Receita, TempoProjeto } from '../types'
 import { formatDate, formatDurationMinutes, getClientName, getRelationItem, projectDueAmount } from '../format'
+import { downloadBlob } from '../download'
 
 export type ExportFormat = 'csv' | 'xlsx'
 
@@ -23,7 +24,7 @@ export const EXPORT_PRESETS = {
     columns: [
       { key: 'data', label: 'Data', value: (r: Receita) => formatDate(r.data) },
       { key: 'descricao', label: 'Descricao', value: (r: Receita) => r.descricao },
-      { key: 'valor', label: 'Valor', value: (r: Receita) => r.valor.toFixed(2) },
+      { key: 'valor', label: 'Valor', value: (r: Receita) => r.valor },
       { key: 'origem', label: 'Origem', value: (r: Receita) => r.origem ?? '' },
       { key: 'projeto', label: 'Projeto', value: (r: Receita) => getRelationItem(r.projetos)?.titulo ?? '' },
     ],
@@ -35,7 +36,7 @@ export const EXPORT_PRESETS = {
       { key: 'data', label: 'Data', value: (r: Gasto) => formatDate(r.data) },
       { key: 'descricao', label: 'Descricao', value: (r: Gasto) => r.descricao },
       { key: 'categoria', label: 'Categoria', value: (r: Gasto) => getExpenseCategoryLabel(r) },
-      { key: 'valor', label: 'Valor', value: (r: Gasto) => r.valor.toFixed(2) },
+      { key: 'valor', label: 'Valor', value: (r: Gasto) => r.valor },
       { key: 'metodo', label: 'Metodo', value: (r: Gasto) => r.metodo ?? '' },
       { key: 'pago', label: 'Pago', value: (r: Gasto) => (r.pago === 1 ? 'Sim' : 'Não') },
     ],
@@ -48,9 +49,9 @@ export const EXPORT_PRESETS = {
       { key: 'projeto', label: 'Projeto', value: (r: Projeto) => r.titulo },
       { key: 'tipo', label: 'Tipo', value: (r: Projeto) => r.tipo ?? '' },
       { key: 'status', label: 'Status', value: (r: Projeto) => r.status ?? 'pendente' },
-      { key: 'valor_total', label: 'Valor total', value: (r: Projeto) => (r.valor_total ?? 0).toFixed(2) },
-      { key: 'valor_pago', label: 'Valor pago', value: (r: Projeto) => (r.valor_pago ?? 0).toFixed(2) },
-      { key: 'em_aberto', label: 'Em aberto', value: (r: Projeto) => projectDueAmount(r).toFixed(2) },
+      { key: 'valor_total', label: 'Valor total', value: (r: Projeto) => r.valor_total ?? 0 },
+      { key: 'valor_pago', label: 'Valor pago', value: (r: Projeto) => r.valor_pago ?? 0 },
+      { key: 'em_aberto', label: 'Em aberto', value: (r: Projeto) => projectDueAmount(r) },
       { key: 'prazo', label: 'Prazo', value: (r: Projeto) => formatDate(r.prazo) },
     ],
     filename: (suffix?: string) => `projetos${suffix ? `-${suffix}` : ''}`,
@@ -61,7 +62,7 @@ export const EXPORT_PRESETS = {
       { key: 'nome', label: 'Nome', value: (r: Investimento) => r.nome },
       { key: 'tipo', label: 'Tipo', value: (r: Investimento) => r.tipo },
       { key: 'ativo', label: 'Ativo', value: (r: Investimento) => (r.ativo === 1 ? 'Sim' : 'Nao') },
-      { key: 'meta_valor', label: 'Meta valor', value: (r: Investimento) => (r.meta_valor ?? 0).toFixed(2) },
+      { key: 'meta_valor', label: 'Meta valor', value: (r: Investimento) => r.meta_valor ?? 0 },
       { key: 'meta_data', label: 'Meta data', value: (r: Investimento) => formatDate(r.meta_data) },
     ],
     filename: (suffix?: string) => `investimentos${suffix ? `-${suffix}` : ''}`,
@@ -72,7 +73,7 @@ export const EXPORT_PRESETS = {
       { key: 'data', label: 'Data', value: (r: Aporte) => formatDate(r.data) },
       { key: 'investimento', label: 'Investimento', value: (r: Aporte) => getRelationItem(r.investimentos)?.nome ?? '' },
       { key: 'tipo', label: 'Tipo', value: (r: Aporte) => r.tipo ?? 'aporte' },
-      { key: 'valor', label: 'Valor', value: (r: Aporte) => r.valor.toFixed(2) },
+      { key: 'valor', label: 'Valor', value: (r: Aporte) => r.valor },
       { key: 'notas', label: 'Notas', value: (r: Aporte) => r.notas ?? '' },
     ],
     filename: (suffix?: string) => `aportes${suffix ? `-${suffix}` : ''}`,
@@ -84,6 +85,7 @@ export const EXPORT_PRESETS = {
       { key: 'inicio', label: 'Inicio', value: (r: TempoProjeto) => formatDate(r.inicio) },
       { key: 'fim', label: 'Fim', value: (r: TempoProjeto) => formatDate(r.fim) },
       { key: 'duracao', label: 'Duracao', value: (r: TempoProjeto) => formatDurationMinutes(r.duracao_min ?? 0) },
+      { key: 'valor_hora', label: 'Valor/Hora registado', value: (r: TempoProjeto) => r.valor_hora ?? '' },
       { key: 'descricao', label: 'Descricao', value: (r: TempoProjeto) => r.descricao ?? '' },
     ],
     filename: (suffix?: string) => `sessoes-timer${suffix ? `-${suffix}` : ''}`,
@@ -92,12 +94,23 @@ export const EXPORT_PRESETS = {
 
 export type ExportType = keyof typeof EXPORT_PRESETS
 
-function escapeCsvValue(value: string | number | boolean | null | undefined) {
-  const serialized = value === null || value === undefined ? '' : String(value)
-  if (serialized.includes('"') || serialized.includes(',') || serialized.includes('\n')) {
+export function escapeCsvValue(value: string | number | boolean | null | undefined) {
+  let serialized = value === null || value === undefined ? '' : String(value)
+  if (typeof value === 'string' && /^[\s]*[=+@\-\t\r]/.test(value)) serialized = `'${serialized}`
+  // Em CSV para Excel em português, ponto e vírgula separa colunas e vírgula os decimais.
+  if (typeof value === 'number') serialized = new Intl.NumberFormat('pt-PT', { useGrouping: false, maximumFractionDigits: 12 }).format(value)
+  if (serialized.includes('"') || serialized.includes(';') || serialized.includes(',') || serialized.includes('\n') || serialized.includes('\r')) {
     return `"${serialized.replaceAll('"', '""')}"`
   }
   return serialized
+}
+
+export function buildCsv<Row>(columns: CsvColumn<Row>[], data: Row[]) {
+  const csvLines = [
+    columns.map((col) => escapeCsvValue(col.label)).join(';'),
+    ...data.map((row) => columns.map((col) => escapeCsvValue(col.value(row))).join(';')),
+  ]
+  return `\uFEFF${csvLines.join('\r\n')}`
 }
 
 export async function exportToCsv<Row>(
@@ -106,19 +119,7 @@ export async function exportToCsv<Row>(
   suffix?: string,
 ): Promise<void> {
   const { columns, filename } = preset
-  const csvLines = [
-    columns.map((col) => escapeCsvValue(col.label)).join(','),
-    ...data.map((row) => columns.map((col) => escapeCsvValue(col.value(row))).join(',')),
-  ]
-  const blob = new Blob([`\uFEFF${csvLines.join('\n')}`], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `${filename(suffix)}.csv`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  downloadBlob(`${filename(suffix)}.csv`, new Blob([buildCsv(columns, data)], { type: 'text/csv;charset=utf-8;' }))
 }
 
 export function getExportFilename<Row>(preset: ExportPreset<Row>, suffix?: string): string {
@@ -131,19 +132,6 @@ interface CsvColumn<Row> {
 }
 
 export function downloadCsv<Row>(filename: string, columns: CsvColumn<Row>[], rows: Row[]) {
-  const csvLines = [
-    columns.map((column) => escapeCsvValue(column.label)).join(','),
-    ...rows.map((row) => columns.map((column) => escapeCsvValue(column.value(row))).join(',')),
-  ]
-
-  const blob = new Blob([`\uFEFF${csvLines.join('\n')}`], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-
-  link.href = url
-  link.download = filename.endsWith('.csv') ? filename : `${filename}.csv`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  const safeFilename = filename.endsWith('.csv') ? filename : `${filename}.csv`
+  downloadBlob(safeFilename, new Blob([buildCsv(columns, rows)], { type: 'text/csv;charset=utf-8;' }))
 }

@@ -14,8 +14,8 @@ export function PageSectionNav({
 }) {
   return (
     <div className="space-y-2">
-      <div className="overflow-x-auto border-b border-[var(--border-subtle)]">
-        <div className="flex flex-nowrap gap-5">
+      <div className="overflow-x-auto pb-1">
+        <div className="inline-flex min-w-max flex-nowrap gap-1 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-1">
           {items.map((item) => (
             <NavLink
               key={item.to}
@@ -23,10 +23,10 @@ export function PageSectionNav({
               end
               className={({ isActive }) =>
                 [
-                  'shrink-0 border-b-2 px-1 py-3 text-sm font-medium transition duration-200',
+                  'shrink-0 rounded-lg px-3 py-2 text-sm font-medium sm:px-4',
                   isActive
-                    ? 'border-[var(--brand)] text-[var(--text-primary)]'
-                    : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]',
+                    ? 'bg-[var(--surface-3)] text-[var(--text-primary)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
                 ].join(' ')
               }
             >

@@ -1,7 +1,7 @@
 from datetime import date, datetime
 
 from openpyxl import load_workbook
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Table
+from pypdf import PdfReader
 
 from database.models import Cliente, Gasto, Projeto, Receita, TempoProjeto
 from utils.exportacao import exportar_relatorio_completo, exportar_relatorio_pdf
@@ -46,34 +46,19 @@ def _dados_relatorio():
     return [projeto], [gasto], [receita], [sessao]
 
 
-def test_relatorio_pdf_consolidado_contem_dados_e_secoes(tmp_path, monkeypatch):
+def test_relatorio_pdf_consolidado_contem_dados_e_secoes(tmp_path):
     projetos, gastos, receitas, sessoes = _dados_relatorio()
-    flowables = []
-    build_pdf = SimpleDocTemplate.build
-
-    def capture_flowables(document, elements, *args, **kwargs):
-        flowables.extend(elements)
-        return build_pdf(document, elements, *args, **kwargs)
-
-    monkeypatch.setattr(SimpleDocTemplate, "build", capture_flowables)
     destino = exportar_relatorio_pdf(
         projetos, gastos, receitas, [], [], sessoes, tmp_path / "relatorio.pdf"
     )
 
-    assert destino.read_bytes().startswith(b"%PDF")
-    paragraph_text = [element.getPlainText() for element in flowables if isinstance(element, Paragraph)]
-    table_text = [
-        str(cell)
-        for element in flowables
-        if isinstance(element, Table)
-        for row in element._cellvalues
-        for cell in row
-    ]
-    report_text = " ".join(paragraph_text + table_text)
+    reader = PdfReader(destino)
+    report_text = " ".join(page.extract_text() or "" for page in reader.pages)
     assert "Resumo Financeiro" in report_text
     assert "Portfolio website" in report_text
     assert "Hosting subscription" in report_text
     assert "Project deposit" in report_text
+    assert "Implementation" in report_text
 
 
 def test_relatorio_excel_completo_e_gerado(tmp_path):

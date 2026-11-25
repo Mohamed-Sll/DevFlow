@@ -5,22 +5,24 @@ interface PanelProps {
   children?: ReactNode
   className?: string
   description?: string
+  id?: string
   icon?: string
   title?: string
 }
 
-export function Panel({ actions, children, className, description, icon, title }: PanelProps) {
+export function Panel({ actions, children, className, description, id, icon, title }: PanelProps) {
   return (
     <section
+      id={id}
       className={[
-        'rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-1)] p-5 shadow-none sm:p-6',
+        'rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] p-4 sm:p-5 lg:p-6',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
     >
       {(title || description || actions) && (
-        <header className="mb-5 flex flex-col gap-4 border-b border-[var(--border-subtle)] pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
             {icon ? (
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-soft)] text-sm text-[var(--brand)]">
@@ -29,7 +31,7 @@ export function Panel({ actions, children, className, description, icon, title }
             ) : null}
             <div>
               {title ? (
-                <h2 className="text-base font-semibold text-[var(--text-primary)]">{title}</h2>
+                <h2 className="font-['Manrope',sans-serif] text-lg font-semibold tracking-[-0.03em] text-[var(--text-primary)]">{title}</h2>
               ) : null}
               {description ? (
                 <p className="mt-1 text-sm leading-relaxed text-[var(--text-muted)]">{description}</p>

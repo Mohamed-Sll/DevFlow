@@ -61,6 +61,7 @@ export interface Gasto {
 
 export interface Receita {
   id: number
+  pagamento_id?: Maybe<number>
   projeto_id: Maybe<number>
   descricao: string
   valor: number
@@ -99,6 +100,7 @@ export interface TempoProjeto {
   fim: Maybe<string>
   duracao_min: Maybe<number>
   descricao: Maybe<string>
+  valor_hora?: Maybe<number>
   criado_em: Maybe<string>
   projetos?: Relation<ProjetoSummary>
 }

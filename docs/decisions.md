@@ -97,7 +97,7 @@ Remove all auth code (login page, guards, auth context, session management).
 ## ADR-006: Single Data Snapshot Pattern
 
 **Date:** 2026-06
-**Status:** Accepted
+**Status:** Superseded by ADR-007
 
 ### Context
 Pages need multiple related data sets (projects, clients, config) and derived calculations.
@@ -106,10 +106,9 @@ Pages need multiple related data sets (projects, clients, config) and derived ca
 Each page fetches a single snapshot containing all its required data, then computes derived values client-side.
 
 ### Consequences
-- One network request per page load
-- All derived data computed consistently from the same snapshot
-- Simple mental model: fetch → compute → render
-- More processing on the client side
+- This described the former network-backed web client.
+- The current web client uses the local IndexedDB snapshot flow described in ADR-007.
+- Keep this decision as historical context for the desktop client and prior web architecture.
 
 ---
 

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { exportToPdfCompleto } from '../lib/export/pdf'
-import type { Gasto, Projeto, Receita, TempoProjeto } from '../lib/types'
+import type { Aporte, Gasto, Investimento, Projeto, Receita, TempoProjeto } from '../lib/types'
 
 const save = vi.hoisted(() => vi.fn())
 const lastDocument = vi.hoisted(() => ({ current: null as unknown }))
@@ -70,8 +70,16 @@ describe('exportToPdfCompleto', () => {
       criado_em: null,
       projetos: { id: 1, titulo: 'Website project' },
     }
+    const investimento: Investimento = {
+      id: 1, nome: 'Emergency fund', tipo: 'Savings', meta_valor: 500, meta_data: null,
+      notas: null, ativo: 1, criado_em: null,
+    }
+    const aporte: Aporte = {
+      id: 1, investimento_id: 1, valor: 50, data: '2026-06-04', tipo: 'aporte',
+      notas: null, criado_em: null, investimentos: { id: 1, nome: 'Emergency fund', tipo: 'Savings' },
+    }
 
-    await exportToPdfCompleto([projeto], [gasto], [receita], [sessao], 'test')
+    await exportToPdfCompleto([projeto], [gasto], [receita], [sessao], [investimento], [aporte], 'test')
 
     expect(save).toHaveBeenCalledWith('devflow-relatorio-test.pdf')
     const pdf = (lastDocument.current as { output: () => string }).output()
@@ -79,5 +87,7 @@ describe('exportToPdfCompleto', () => {
     expect(pdf).toContain('Website project')
     expect(pdf).toContain('Hosting subscription')
     expect(pdf).toContain('Project deposit')
+    expect(pdf).toContain('Emergency fund')
+    expect(pdf).toContain('Movimentos de investimento')
   })
 })

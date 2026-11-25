@@ -6,11 +6,9 @@ const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 export const DEFAULT_CONFIG: ConfigMap = {
   alerta_conta_dias: '3',
   alerta_prazo_dias: '7',
-  caminho_backup: '',
   moeda: 'CVE',
   nome_usuario: '',
   tema: 'light',
-  ultimo_backup: 'nunca',
   valor_hora_padrao: '0',
   valor_hora_projetos: '{}',
 }
@@ -22,13 +20,13 @@ export const CURRENCY_OPTIONS = [
 ]
 
 export const BUTTON_PRIMARY =
-  'inline-flex items-center justify-center rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-[var(--inverted-text)] transition hover:brightness-105 focus-visible:ring-4 focus-visible:ring-[var(--brand-soft)] disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex min-h-10 items-center justify-center rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--brand-strong)] focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-canvas)] disabled:cursor-not-allowed disabled:opacity-50'
 
 export const BUTTON_SECONDARY =
-  'inline-flex items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-50'
+  'inline-flex min-h-10 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)] focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-canvas)] disabled:cursor-not-allowed disabled:opacity-50'
 
 export const INPUT_BASE =
-  'w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] transition focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand-soft)]'
+  'w-full min-h-11 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-1)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] transition-colors focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand-soft)]'
 
 export const TEXTAREA_BASE = `${INPUT_BASE} min-h-[110px] resize-y`
 

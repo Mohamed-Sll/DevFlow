@@ -1,11 +1,7 @@
-import {
-  AlertTriangle,
-  RefreshCcw,
-  TrendingUp,
-} from 'lucide-react'
+import { RefreshCcw, TrendingUp } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { ComparisonAreaChart, DonutChart, MiniBarChart } from '../components/charts/data-viz'
-import { ExportCompleto, ExportDropdown } from '../components/shared/export-dropdown'
+import { ExportCompleto } from '../components/shared/export-dropdown'
 import { FullScreenLoader } from '../components/ui/full-screen-loader'
 import { PageSectionNav } from '../components/layout/page-section-nav'
 import { Panel } from '../components/ui/panel'
@@ -80,10 +76,6 @@ const STATUS_DEFINITIONS = [
   },
 ]
 
-function monthStamp(reference = new Date()) {
-  return `${reference.getFullYear()}-${String(reference.getMonth() + 1).padStart(2, '0')}`
-}
-
 export function DashboardPage() {
   const location = useLocation()
   const { data, error, isLoading, reload } = useAsyncData(fetchDashboardSnapshot)
@@ -109,19 +101,14 @@ export function DashboardPage() {
     )
   }
 
-  const { aportes, configuracoes, gastos, projetos, receitas, sessoes } = data
+  const { aportes, configuracoes, gastos, investimentos, projetos, receitas, sessoes } = data
   const currency = configuracoes.moeda ?? 'CVE'
   const { end, start } = getMonthBounds()
   const receitasDoMes = receitas.filter((item) => isWithinDateRange(item.data, start, end))
   const receitasMes = sumBy(receitasDoMes, (item) => item.valor)
   const gastosMes = sumBy(gastos, (item) => item.valor, (item) => isWithinDateRange(item.data, start, end))
-  const investidoMes = sumBy(
-    aportes,
-    (item) => item.valor,
-    (item) => item.tipo === 'aporte' && isWithinDateRange(item.data, start, end),
-  )
   const operatingBalance = receitasMes - gastosMes
-  const saldoMes = operatingBalance - investidoMes
+  const saldoMes = operatingBalance
   const categoriasMes = new Set(
     gastos
       .filter((item) => isWithinDateRange(item.data, start, end))
@@ -205,25 +192,21 @@ export function DashboardPage() {
 
   const excelCards = [
     {
-      formula: '(receitas - gastos) / receitas',
       helper: 'Margem operacional do mes corrente.',
       label: 'Margem operacional',
       value: formatRatio(receitasMes > 0 ? operatingBalance / receitasMes : 0),
     },
     {
-      formula: 'receitas / lancamentos',
       helper: 'Ticket medio por receita registada neste mes.',
       label: 'Ticket medio',
       value: formatCurrency(averageTicket, currency),
     },
     {
-      formula: 'valor pago / valor total',
       helper: 'Percentual ja convertido em caixa na carteira de projetos.',
       label: 'Taxa de cobranca',
       value: formatRatio(collectionRate),
     },
     {
-      formula: 'a receber / gastos do mes',
       helper: 'Quanto o pipeline cobre do teu custo mensal.',
       label: 'Cobertura de caixa',
       value: formatCoverage(receivableCoverage),
@@ -231,7 +214,7 @@ export function DashboardPage() {
   ]
   const section = getWorkspaceSection(location.pathname, '/dashboard', 'overview')
   const sectionNavItems = [
-    { label: 'Resumo', to: '/dashboard' },
+    { label: 'Visão geral', to: '/dashboard' },
     { label: 'Fluxo', to: '/dashboard/fluxo' },
     { label: 'Pipeline', to: '/dashboard/pipeline' },
     { label: 'Operações', to: '/dashboard/operacoes' },
@@ -239,43 +222,35 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <PageSectionNav
-        helper="Resumo, fluxo financeiro, pipeline e operações — cada vista reúne as métricas relevantes para a tarefa."
-        items={sectionNavItems}
-      />
+      <PageSectionNav items={sectionNavItems} />
 
-        <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
-          <div className="flex items-center gap-3 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-1)] px-5 py-3 text-sm text-[var(--text-secondary)]">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--alert-warning-border)] bg-[var(--alert-warning-bg)] text-[var(--color-warning)]">
-              <AlertTriangle className="h-4 w-4" />
-            </span>
-            <span>{alerts.length > 0 ? `${alerts.length} alerta(s) ativo(s)` : 'Nenhum alerta ativo no momento'}</span>
-          </div>
-
-        <div className="flex flex-wrap gap-3">
-          <ExportDropdown data={receitas} type="receitas" filename={monthStamp()} label="Receitas" />
-          <ExportDropdown data={gastos} type="gastos" filename={monthStamp()} label="Gastos" />
-          <ExportDropdown data={projetos} type="projetos" filename={monthStamp()} label="Pipeline" />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-[var(--text-secondary)]">
+          Resumo financeiro de <span className="font-medium text-[var(--text-primary)]">{new Intl.DateTimeFormat('pt-PT', { month: 'long', year: 'numeric' }).format(new Date())}</span>
+        </p>
+        <div className="flex flex-wrap gap-2">
           <ExportCompleto
             projetos={projetos}
             gastos={gastos}
             receitas={receitas}
             sessoes={sessoes}
-            label="Relatório"
+            investimentos={investimentos}
+            aportes={aportes}
+            label="Exportar relatório"
           />
           <button className={BUTTON_SECONDARY} onClick={() => void reload()} type="button">
             <RefreshCcw className="mr-2 h-4 w-4" />
-            Atualizar
+            <span className="hidden sm:inline">Atualizar</span>
           </button>
         </div>
       </div>
 
-      {['overview', 'pipeline'].includes(section) && visibleStatusRows.length > 0 ? (
-        <div className="flex flex-wrap gap-3">
+      {['overview', 'pipeline'].includes(section) ? (
+        visibleStatusRows.length > 0 ? <div className="flex flex-wrap gap-2">
           {visibleStatusRows.map((row) => (
             <div
               key={row.key}
-              className="inline-flex items-center gap-3 rounded-full border px-4 py-2.5 text-sm shadow-[var(--shadow-soft)]"
+              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
               style={{
                 backgroundColor: row.surface,
                 borderColor: row.border,
@@ -289,7 +264,7 @@ export function DashboardPage() {
               </span>
             </div>
           ))}
-        </div>
+        </div> : null
       ) : null}
 
       {alerts.length > 0 && section === 'overview' ? (
@@ -310,35 +285,35 @@ export function DashboardPage() {
       ) : null}
 
       {['overview', 'fluxo'].includes(section) ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
           <StatCard
             accent="var(--color-success)"
             label="Receitas"
-            subtitle={`${receitasDoMes.length} entradas no mes`}
+            subtitle={`${receitasDoMes.length} registos este mês`}
             value={formatCurrency(receitasMes, currency)}
           />
           <StatCard
             accent="var(--color-danger)"
             label="Gastos"
-            subtitle={`${categoriasMes} categorias monitoradas`}
+            subtitle={`${categoriasMes} categorias este mês`}
             value={formatCurrency(gastosMes, currency)}
           />
           <StatCard
             accent="var(--color-info)"
             label="Saldo"
-            subtitle="resultado operacional apos aportes"
+            subtitle="receitas menos gastos operacionais"
             value={formatCurrency(saldoMes, currency)}
           />
           <StatCard
             accent="var(--color-warning)"
             label="A receber"
-            subtitle={`${activeProjects} projeto(s) em aberto`}
+            subtitle={`${activeProjects} projetos em aberto`}
             value={formatCurrency(pendingReceivables, currency)}
           />
           <StatCard
             accent="var(--color-accent-purple)"
             label="Ticket medio"
-            subtitle="media por receita no mes"
+            subtitle="média por receita este mês"
             value={formatCurrency(averageTicket, currency)}
           />
         </div>
@@ -353,8 +328,8 @@ export function DashboardPage() {
               fluxo 6M
             </div>
           }
-          description="Receitas vs gastos dos ultimos seis meses com visualizacao pronta para reunioes ou exportacao."
-          title="Performance mensal"
+          description="Compara o dinheiro que entrou e saiu ao longo dos últimos seis meses."
+          title="Entradas e saídas"
         >
           <ComparisonAreaChart
             data={groupedIncome.map((incomeRow, index) => ({
@@ -370,31 +345,31 @@ export function DashboardPage() {
           />
 
           <div className="mt-5 grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-5 transition hover:border-[var(--border-strong)]">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Run-rate</p>
+            <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-4">
+              <p className="text-xs font-medium text-[var(--text-secondary)]">Média de receitas</p>
               <p className="mt-4 text-2xl font-semibold tracking-[-0.05em] text-[var(--text-primary)]">
                 {formatCurrency(trailingIncome, currency)}
               </p>
-              <p className="mt-2 text-sm text-[var(--text-secondary)]">Media recente de faturamento.</p>
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">Média mensal dos últimos 3 meses.</p>
             </div>
-            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-5 transition hover:border-[var(--border-strong)]">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Burn-rate</p>
+            <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-4">
+              <p className="text-xs font-medium text-[var(--text-secondary)]">Média de gastos</p>
               <p className="mt-4 text-2xl font-semibold tracking-[-0.05em] text-[var(--text-primary)]">
                 {formatCurrency(trailingExpenses, currency)}
               </p>
-              <p className="mt-2 text-sm text-[var(--text-secondary)]">Media recente de saida de caixa.</p>
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">Média mensal dos últimos 3 meses.</p>
             </div>
-            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-5 transition hover:border-[var(--border-strong)]">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Projecao</p>
+            <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-4">
+              <p className="text-xs font-medium text-[var(--text-secondary)]">Saldo estimado</p>
               <p className="mt-4 text-2xl font-semibold tracking-[-0.05em] text-[var(--text-primary)]">
                 {formatCurrency(nextMonthProjection, currency)}
               </p>
-              <p className="mt-2 text-sm text-[var(--text-secondary)]">Estimativa liquida do proximo ciclo.</p>
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">Estimativa para o próximo mês.</p>
             </div>
           </div>
         </Panel>
 
-        <Panel description="Volume atual da carteira e distribuicao de estados do pipeline." title="Radar do pipeline">
+        <Panel description="Projetos em curso e respetiva distribuição por estado." title="Estado dos projetos">
           {visibleStatusRows.length > 0 ? (
             <DonutChart
               centerLabel="Projetos"
@@ -407,7 +382,10 @@ export function DashboardPage() {
               }))}
             />
           ) : (
-            <p className="text-sm text-[var(--text-secondary)]">Ainda nao ha projetos com status definido.</p>
+            <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border-strong)] px-6 text-center">
+              <p className="font-medium text-[var(--text-primary)]">Ainda não há projetos</p>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">Quando criares um projeto, o resumo aparece aqui.</p>
+            </div>
           )}
         </Panel>
         </div>
@@ -415,28 +393,22 @@ export function DashboardPage() {
 
       {['overview', 'fluxo'].includes(section) ? (
         <div className="grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
-        <Panel description="Leituras rapidas com formulas que podes validar no Excel." title="Desk Excel">
+        <Panel description="Indicadores calculados a partir dos teus registos." title="Indicadores do negócio">
           <div className="grid gap-3 md:grid-cols-2">
             {excelCards.map((card) => (
               <article
                 key={card.label}
-                className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-5 transition hover:border-[var(--border-strong)]"
+                className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-4"
               >
-                <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">{card.label}</p>
-                <p className="mt-4 text-2xl font-semibold tracking-[-0.05em] text-[var(--text-primary)]">
+                <p className="text-xs font-medium text-[var(--text-secondary)]">{card.label}</p>
+                <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--text-primary)]">
                   {card.value}
                 </p>
-                <p className="mt-2 font-mono text-xs text-[var(--text-muted)]">{card.formula}</p>
-                <p className="mt-3 text-sm text-[var(--text-secondary)]">{card.helper}</p>
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">{card.helper}</p>
               </article>
             ))}
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-3">
-            <ExportDropdown data={receitas} type="receitas" filename={monthStamp()} label="Receitas" />
-            <ExportDropdown data={gastos} type="gastos" filename={monthStamp()} label="Gastos" />
-            <ExportDropdown data={projetos} type="projetos" filename={monthStamp()} label="Pipeline" />
-          </div>
         </Panel>
 
         <Panel description="Categorias com maior peso no gasto do mes atual." title="Gastos por categoria">

@@ -10,10 +10,8 @@ export default defineConfig({
       '@': '/src',
     },
   },
-  optimizeDeps: {
-    include: ['exceljs'],
-  },
   build: {
+    manifest: 'asset-manifest.json',
     commonjsOptions: {
       include: [/exceljs/, /node_modules/],
     },

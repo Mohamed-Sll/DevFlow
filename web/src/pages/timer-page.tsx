@@ -68,9 +68,9 @@ export function TimerPage() {
   const [now, setNow] = useState(() => new Date())
   const section = getWorkspaceSection(location.pathname, '/timer', 'overview')
   const sectionNavItems = [
-    { label: 'Resumo', to: '/timer' },
-    { label: 'Faturacao', to: '/timer/faturacao' },
-    { label: 'Historico', to: '/timer/historico' },
+    { label: 'Visão geral', to: '/timer' },
+    { label: 'Faturação', to: '/timer/faturacao' },
+    { label: 'Histórico', to: '/timer/historico' },
   ]
 
   const [prevTimerData, setPrevTimerData] = useState(data)
@@ -161,6 +161,7 @@ export function TimerPage() {
         string,
         {
           count: number
+          estimatedAmount: number
           minutes: number
           projectId: number | null
           projectName: string
@@ -177,21 +178,29 @@ export function TimerPage() {
 
       accumulator[key] = accumulator[key] ?? {
         count: 0,
+        estimatedAmount: 0,
         minutes: 0,
         projectId: item.projeto_id ?? null,
         projectName: getSessionProjectTitle(item),
       }
+      const sessionRate = item.valor_hora ?? (
+        item.projeto_id !== null && normalizedProjectRates[String(item.projeto_id)] !== undefined
+          ? normalizedProjectRates[String(item.projeto_id)]
+          : effectiveDefaultRate
+      )
       accumulator[key].count += 1
       accumulator[key].minutes += minutes
+      accumulator[key].estimatedAmount += (minutes / 60) * sessionRate
       return accumulator
     }, {}),
   )
     .map((item) => {
-      const rate =
+      const currentRate =
         item.projectId !== null && normalizedProjectRates[String(item.projectId)] !== undefined
           ? normalizedProjectRates[String(item.projectId)]
           : effectiveDefaultRate
-      const estimatedAmount = (item.minutes / 60) * rate
+      const rate = item.minutes > 0 ? item.estimatedAmount / (item.minutes / 60) : currentRate
+      const estimatedAmount = item.estimatedAmount
 
       return { ...item, estimatedAmount, rate }
     })
@@ -213,7 +222,9 @@ export function TimerPage() {
     setIsSubmitting(true)
 
     try {
-      await startWorkSession(Number(selectedProjectId), startDescription)
+      const projectId = Number(selectedProjectId)
+      const hourlyRate = normalizedProjectRates[String(projectId)] ?? effectiveDefaultRate
+      await startWorkSession(projectId, startDescription, hourlyRate)
       setStartDescription('')
       setFeedback('Sessao iniciada com sucesso.')
       await reload()
@@ -271,10 +282,10 @@ export function TimerPage() {
       `faturacao-timer-${periodLabel}`,
       [
         { label: 'Projeto', value: (item: typeof groupedByProject[number]) => item.projectName },
-        { label: 'Sessoes', value: (item: typeof groupedByProject[number]) => String(item.count) },
-        { label: 'Horas', value: (item: typeof groupedByProject[number]) => (item.minutes / 60).toFixed(2) },
-        { label: 'Valor/Hora', value: (item: typeof groupedByProject[number]) => item.rate.toFixed(2) },
-        { label: 'Total Faturavel', value: (item: typeof groupedByProject[number]) => item.estimatedAmount.toFixed(2) },
+        { label: 'Sessoes', value: (item: typeof groupedByProject[number]) => item.count },
+        { label: 'Horas', value: (item: typeof groupedByProject[number]) => item.minutes / 60 },
+        { label: 'Valor/Hora', value: (item: typeof groupedByProject[number]) => item.rate },
+        { label: 'Total Faturavel', value: (item: typeof groupedByProject[number]) => item.estimatedAmount },
       ],
       groupedByProject,
     )
@@ -425,7 +436,7 @@ export function TimerPage() {
             </button>
           }
           description="Define a taxa padrao e, se precisares, um valor por hora especifico para cada projeto."
-          title="Faturacao"
+          title="Faturação"
         >
           <div className="space-y-4">
             <label className="space-y-2">
@@ -532,7 +543,7 @@ export function TimerPage() {
         </Panel>
         ) : null}
 
-        <Panel description="Ultimas sessoes registadas na tabela tempo_projeto." title="Historico recente">
+        <Panel description="As sessões de trabalho guardadas neste navegador." title="Histórico recente">
           {recentSessions.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full border-separate border-spacing-y-2 text-left">

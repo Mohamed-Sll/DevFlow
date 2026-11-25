@@ -1,11 +1,15 @@
 import {
   AlertTriangle,
+  CheckCircle2,
   ChevronDown,
+  CircleDashed,
   FileSpreadsheet,
   PlusCircle,
+  Pencil,
   RefreshCcw,
   Search,
   Trash2,
+  X,
 } from 'lucide-react'
 import { useDeferredValue, useState } from 'react'
 import { useLocation } from 'react-router-dom'
@@ -38,12 +42,16 @@ import {
   sumBy,
 } from '../lib/format'
 import { getWorkspaceSection } from '../lib/navigation'
+import { recurringDueDate } from '../lib/financial-rules'
 import {
   createGasto,
   createReceita,
   deleteGasto,
   deleteReceita,
   fetchFinanceSnapshot,
+  updateGasto,
+  updateReceita,
+  updateGastoStatus,
 } from '../lib/data'
 import type { Gasto, Receita } from '../lib/types'
 
@@ -124,7 +132,7 @@ function PeriodSelectorPanel({
         </div>
         <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[var(--color-success)]/30 bg-[var(--color-success)]/10 px-3 py-1.5 text-[11px] uppercase tracking-[0.1em] text-[var(--color-success)]">
           <span className="h-2 w-2 rounded-full bg-[var(--color-success)]" />
-          Local
+          Neste dispositivo
         </div>
       </div>
 
@@ -389,10 +397,7 @@ function buildMonthlySeries<T>(
 }
 
 function getRecurringDueDate(item: Gasto, reference: Date) {
-  const daysInMonth = new Date(reference.getFullYear(), reference.getMonth() + 1, 0).getDate()
-  const baseDay = parseDateValue(item.data).getDate() || 1
-  const dueDay = Math.min(item.dia_vencimento ?? baseDay, daysInMonth)
-  return new Date(reference.getFullYear(), reference.getMonth(), dueDay)
+  return recurringDueDate(item.dia_vencimento, item.data, reference)
 }
 
 function getDueStatusLabel(target: Date, currentMonthView: boolean) {
@@ -463,12 +468,15 @@ export function FinancePage() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [submittingForm, setSubmittingForm] = useState<'expense' | 'income' | null>(null)
   const [deletingExpenseId, setDeletingExpenseId] = useState<number | null>(null)
+  const [updatingExpenseId, setUpdatingExpenseId] = useState<number | null>(null)
   const [deletingIncomeId, setDeletingIncomeId] = useState<number | null>(null)
+  const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null)
+  const [editingIncomeId, setEditingIncomeId] = useState<number | null>(null)
   const section = getWorkspaceSection(location.pathname, '/financas', 'overview')
   const sectionNavItems = [
-    { label: 'Resumo', to: '/financas' },
-    { label: 'Lancamentos', to: '/financas/lancamentos' },
-    { label: 'Anual', to: '/financas/anual' },
+    { label: 'Visão geral', to: '/financas' },
+    { label: 'Lançamentos', to: '/financas/lancamentos' },
+    { label: 'Resumo anual', to: '/financas/anual' },
   ]
   const deferredSearchQuery = useDeferredValue(searchQuery)
 
@@ -512,7 +520,6 @@ export function FinancePage() {
   const pendentes = gastosMes.filter((item) => item.pago === 0)
   const pendenteValor = sumBy(pendentes, (item) => item.valor)
   const recorrentes = gastos.filter((item) => item.recorrente === 1)
-  const recurringCommitment = sumBy(recorrentes, (item) => item.valor)
   const linkedProjectIncome = sumBy(receitasMes, (item) => item.valor, (item) => Boolean(getRelationItem(item.projetos)))
   const averageExpense = gastosMes.length > 0 ? gastosTotal / gastosMes.length : 0
   const averageIncome = receitasMes.length > 0 ? receitasTotal / receitasMes.length : 0
@@ -639,10 +646,10 @@ export function FinancePage() {
       `resumo-financas-${selectedYear}`,
       [
         { label: 'Mes', value: (row) => row.label },
-        { label: 'Receitas', value: (row) => row.income.toFixed(2) },
-        { label: 'Gastos', value: (row) => row.expenses.toFixed(2) },
-        { label: 'Saldo', value: (row) => row.net.toFixed(2) },
-        { label: 'Margem', value: (row) => (row.margin * 100).toFixed(2) },
+        { label: 'Receitas', value: (row) => row.income },
+        { label: 'Gastos', value: (row) => row.expenses },
+        { label: 'Saldo', value: (row) => row.net },
+        { label: 'Margem (%)', value: (row) => row.margin * 100 },
       ],
       annualSummaryRows,
     )
@@ -665,7 +672,7 @@ export function FinancePage() {
         throw new Error('Informe a categoria personalizada do gasto.')
       }
 
-      await createGasto({
+      const expenseInput = {
         category,
         date: expenseForm.date,
         description: expenseForm.description,
@@ -675,7 +682,9 @@ export function FinancePage() {
         paid: expenseForm.paid,
         recurring: expenseForm.recurring,
         value: expenseForm.value ? Number(expenseForm.value) : 0,
-      })
+      }
+      if (editingExpenseId) await updateGasto(editingExpenseId, expenseInput)
+      else await createGasto(expenseInput)
 
       const createdExpenseDate = parseDateValue(expenseForm.date)
       if (Number.isFinite(createdExpenseDate.getTime())) {
@@ -695,7 +704,8 @@ export function FinancePage() {
         recurring: false,
         value: '',
       })
-      setFeedback('Gasto registado com sucesso.')
+      setFeedback(editingExpenseId ? 'Gasto atualizado com sucesso.' : 'Gasto registado com sucesso.')
+      setEditingExpenseId(null)
       await reload()
     } catch (caughtError) {
       setActionError(caughtError instanceof Error ? caughtError.message : 'Nao foi possivel registar o gasto.')
@@ -710,13 +720,15 @@ export function FinancePage() {
     setSubmittingForm('income')
 
     try {
-      await createReceita({
+      const incomeInput = {
         date: incomeForm.date,
         description: incomeForm.description,
         projectId: incomeForm.projectId ? Number(incomeForm.projectId) : null,
         source: incomeForm.source,
         value: incomeForm.value ? Number(incomeForm.value) : 0,
-      })
+      }
+      if (editingIncomeId) await updateReceita(editingIncomeId, incomeInput)
+      else await createReceita(incomeInput)
 
       const createdIncomeDate = parseDateValue(incomeForm.date)
       if (Number.isFinite(createdIncomeDate.getTime())) {
@@ -731,7 +743,8 @@ export function FinancePage() {
         source: '',
         value: '',
       })
-      setFeedback('Receita registada com sucesso.')
+      setFeedback(editingIncomeId ? 'Receita atualizada com sucesso.' : 'Receita registada com sucesso.')
+      setEditingIncomeId(null)
       await reload()
     } catch (caughtError) {
       setActionError(caughtError instanceof Error ? caughtError.message : 'Nao foi possivel registar a receita.')
@@ -761,6 +774,22 @@ export function FinancePage() {
     }
   }
 
+  async function handleToggleExpenseStatus(expenseId: number, paid: boolean) {
+    setFeedback(null)
+    setActionError(null)
+    setUpdatingExpenseId(expenseId)
+
+    try {
+      await updateGastoStatus(expenseId, !paid)
+      setFeedback(!paid ? 'Gasto marcado como pago.' : 'Gasto marcado como pendente.')
+      await reload()
+    } catch (caughtError) {
+      setActionError(caughtError instanceof Error ? caughtError.message : 'Não foi possível atualizar o gasto.')
+    } finally {
+      setUpdatingExpenseId(null)
+    }
+  }
+
   async function handleDeleteIncome(receiptId: number, description: string) {
     const shouldDelete = window.confirm(`Remover a receita "${description}"?`)
     if (!shouldDelete) {
@@ -780,6 +809,44 @@ export function FinancePage() {
     } finally {
       setDeletingIncomeId(null)
     }
+  }
+
+  function handleEditExpense(item: Gasto) {
+    setEditingExpenseId(item.id)
+    setEditingIncomeId(null)
+    setExpenseForm({
+      category: item.categoria_nome ?? '',
+      customCategory: '',
+      date: item.data,
+      description: item.descricao,
+      dueDay: item.dia_vencimento?.toString() ?? '',
+      method: item.metodo ?? '',
+      notes: item.notas ?? '',
+      paid: item.pago === 1,
+      recurring: item.recorrente === 1,
+      value: String(item.valor),
+    })
+    document.getElementById('finance-expense-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  function handleEditIncome(item: Receita) {
+    setEditingIncomeId(item.id)
+    setEditingExpenseId(null)
+    setIncomeForm({
+      date: item.data,
+      description: item.descricao,
+      projectId: item.projeto_id?.toString() ?? '',
+      source: item.origem ?? '',
+      value: String(item.valor),
+    })
+    document.getElementById('finance-income-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  function cancelEdit() {
+    setEditingExpenseId(null)
+    setEditingIncomeId(null)
+    setExpenseForm({ category: '', customCategory: '', date: formatInputDateValue(), description: '', dueDay: '', method: '', notes: '', paid: true, recurring: false, value: '' })
+    setIncomeForm({ date: formatInputDateValue(), description: '', projectId: '', source: '', value: '' })
   }
 
   return (
@@ -933,12 +1000,12 @@ export function FinancePage() {
             </div>
 
             <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-2)] p-5 transition hover:border-[var(--border-strong)]">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Compromisso recorrente</p>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--text-muted)]">Registos recorrentes</p>
               <p className="mt-4 text-2xl font-semibold tracking-[-0.05em] text-[var(--text-primary)]">
-                {formatCurrency(recurringCommitment, currency)}
+                {recorrentes.length}
               </p>
               <p className="mt-2 text-sm text-[var(--text-secondary)]">
-                {recorrentes.length} despesa(s) recorrente(s) catalogada(s).
+                Registos marcados como recorrentes. Não são criadas cobranças automaticamente.
               </p>
             </div>
 
@@ -1065,7 +1132,10 @@ export function FinancePage() {
       {section === 'lancamentos' ? (
 <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-2">
           <Panel
+          id="finance-expense-form"
           actions={
+            <div className="flex flex-wrap gap-2">
+            {(editingExpenseId || editingIncomeId) ? <button className={BUTTON_SECONDARY} onClick={cancelEdit} type="button"><X className="mr-2 h-4 w-4" />Cancelar edição</button> : null}
             <button
               className={BUTTON_PRIMARY}
               disabled={submittingForm === 'expense'}
@@ -1073,8 +1143,9 @@ export function FinancePage() {
               type="button"
             >
               <PlusCircle className="mr-2 h-4 w-4" />
-              Registar gasto
+              {editingExpenseId ? 'Guardar gasto' : 'Registar gasto'}
             </button>
+            </div>
           }
           description="Lanca despesas avulsas ou recorrentes diretamente na base."
           title="Novo gasto"
@@ -1218,6 +1289,7 @@ export function FinancePage() {
         </Panel>
 
         <Panel
+          id="finance-income-form"
           actions={
             <button
               className={BUTTON_PRIMARY}
@@ -1226,7 +1298,7 @@ export function FinancePage() {
               type="button"
             >
               <PlusCircle className="mr-2 h-4 w-4" />
-              Registar receita
+              {editingIncomeId ? 'Guardar receita' : 'Registar receita'}
             </button>
           }
           description="Lanca entradas avulsas ou associa pagamentos a um projeto existente."
@@ -1332,11 +1404,28 @@ export function FinancePage() {
                         {item.notas ? <p className="mt-2 text-sm text-[var(--text-secondary)]">{item.notas}</p> : null}
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                         <span className="font-mono text-sm text-[var(--color-danger)]">-{formatCurrency(item.valor, currency)}</span>
                         <button
                           className={`${BUTTON_SECONDARY} px-3 py-2 text-xs`}
-                          disabled={deletingExpenseId === item.id}
+                          onClick={() => handleEditExpense(item)}
+                          type="button"
+                        >
+                          <Pencil className="mr-2 h-3.5 w-3.5" />Editar
+                        </button>
+                        <button
+                          aria-label={item.pago === 1 ? `Marcar ${item.descricao} como pendente` : `Marcar ${item.descricao} como pago`}
+                          className={`${BUTTON_SECONDARY} px-3 py-2 text-xs`}
+                          disabled={updatingExpenseId === item.id || deletingExpenseId === item.id}
+                          onClick={() => void handleToggleExpenseStatus(item.id, item.pago === 1)}
+                          type="button"
+                        >
+                          {item.pago === 1 ? <CircleDashed aria-hidden="true" className="mr-2 h-3.5 w-3.5" /> : <CheckCircle2 aria-hidden="true" className="mr-2 h-3.5 w-3.5" />}
+                          {item.pago === 1 ? 'Marcar pendente' : 'Marcar pago'}
+                        </button>
+                        <button
+                          className={`${BUTTON_SECONDARY} px-3 py-2 text-xs`}
+                          disabled={deletingExpenseId === item.id || updatingExpenseId === item.id}
                           onClick={() => void handleDeleteExpense(item.id, item.descricao)}
                           type="button"
                         >
@@ -1375,6 +1464,13 @@ export function FinancePage() {
 
                       <div className="flex items-center gap-3">
                         <span className="font-mono text-sm text-[var(--color-success)]">+{formatCurrency(item.valor, currency)}</span>
+                        <button
+                          className={`${BUTTON_SECONDARY} px-3 py-2 text-xs`}
+                          onClick={() => handleEditIncome(item)}
+                          type="button"
+                        >
+                          <Pencil className="mr-2 h-3.5 w-3.5" />Editar
+                        </button>
                         <button
                           className={`${BUTTON_SECONDARY} px-3 py-2 text-xs`}
                           disabled={deletingIncomeId === item.id}
