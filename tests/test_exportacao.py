@@ -58,7 +58,9 @@ def test_relatorio_pdf_consolidado_contem_dados_e_secoes(tmp_path):
     assert "Portfolio website" in report_text
     assert "Hosting subscription" in report_text
     assert "Project deposit" in report_text
+    assert "Sessões de trabalho" in report_text
     assert "Implementation" in report_text
+    assert "90" in report_text
 
 
 def test_relatorio_excel_completo_e_gerado(tmp_path):
